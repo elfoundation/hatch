@@ -7,6 +7,40 @@ on:
     branches: [main]
 
 jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./... -v -race
+
+      - name: Build
+        run: CGO_ENABLED=0 go build -o /dev/null ./cmd/hatch
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t hatch:ci .
+
+      - name: Smoke test the Docker image
+        run: |
+          docker run --rm -d -p 8080:8080 --name hatch-ci hatch:ci
+          sleep 2
+          curl -fsS http://localhost:8080/healthz | grep -q 'ok'
+          docker stop hatch-ci
+
   lint-docs:
     runs-on: ubuntu-latest
     steps:
@@ -16,18 +50,3 @@ jobs:
         with:
           globs: '**/*.md'
         continue-on-error: true
-
-  # TODO: Enable once we have a TypeScript project
-  # lint-and-test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-  #         cache: 'pnpm'
-  #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm lint
-  #     - run: pnpm typecheck
-  #     - run: pnpm test

@@ -1,0 +1,19 @@
+{$HATCH_HOSTNAME:localhost} {
+	reverse_proxy hatch:8080
+
+	# Log requests for debugging
+	log {
+		output stdout
+		format json
+	}
+
+	# Security headers
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+	}
+
+	# TLS: auto via Let's Encrypt when HATCH_HOSTNAME is a real domain.
+	# Falls back to self-signed for localhost / internal-only names.
+}
