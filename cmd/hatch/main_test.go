@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -42,7 +41,7 @@ func TestHealthzViaRouter(t *testing.T) {
 func TestHealthzSmoke(t *testing.T) {
 	// Smoke: boot server on random port, hit /healthz.
 	// Use :memory: store so no filesystem dependency.
-	os.Setenv("HATCH_DB_PATH", ":memory:")
+	t.Setenv("HATCH_DB_PATH", ":memory:")
 
 	repo, err := store.Open(":memory:")
 	if err != nil {

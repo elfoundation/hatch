@@ -348,3 +348,95 @@ func TestCaptureReturnsJSON200(t *testing.T) {
 		t.Fatal("invalid json")
 	}
 }
+
+func TestMockSetsAndConfiguresResponse(t *testing.T) {
+	repo := newFakeRepo()
+	repo.CreateEndpoint(nil, "mock-ep")
+
+	r := testRouter(repo)
+
+	// Set a mock via PUT.
+	mockBody := `{"status": 201, "headers": {"X-Mocked": "yes"}, "body": "bW9ja2Vk"}`
+	req := httptest.NewRequest(http.MethodPut, "/e/mock-ep/mock", strings.NewReader(mockBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// Verify the mock was stored.
+	mock, err := repo.GetMock(nil, "mock-ep")
+	if err != nil {
+		t.Fatalf("mock not stored: %v", err)
+	}
+	if mock.Status != 201 {
+		t.Errorf("expected status 201, got %d", mock.Status)
+	}
+	if mock.Headers["X-Mocked"] != "yes" {
+		t.Errorf("expected X-Mocked header, got %v", mock.Headers)
+	}
+}
+
+func TestMockReturnsConfiguredResponseOnCapture(t *testing.T) {
+	repo := newFakeRepo()
+	repo.CreateEndpoint(nil, "mock-cap")
+	// Pre-set a mock.
+	repo.SetMock(nil, &store.MockConfig{
+		EndpointID: "mock-cap",
+		Status:     418,
+		Headers:    map[string]string{"X-Teapot": "true"},
+		Body:       []byte(`{"brewing": true}`),
+	})
+
+	r := testRouter(repo)
+
+	// Capture a request — should return the mock response, not the default 200.
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/mock-cap", strings.NewReader(`{"order":"latte"}`)))
+
+	if w.Code != 418 {
+		t.Fatalf("expected mock status 418, got %d", w.Code)
+	}
+	if w.Header().Get("X-Teapot") != "true" {
+		t.Errorf("expected X-Teapot: true, got %q", w.Header().Get("X-Teapot"))
+	}
+	body := strings.TrimSpace(w.Body.String())
+	if body != `{"brewing": true}` {
+		t.Errorf("expected mock body, got %q", body)
+	}
+
+	// Request should still be captured even when mock responds.
+	if len(repo.requests) != 1 {
+		t.Fatalf("expected 1 captured request, got %d", len(repo.requests))
+	}
+	if repo.requests[0].Method != "POST" {
+		t.Errorf("captured method: %s", repo.requests[0].Method)
+	}
+}
+
+func TestMockAutoCreatesEndpointOnSet(t *testing.T) {
+	repo := newFakeRepo()
+	r := testRouter(repo)
+
+	// Set a mock on an endpoint that doesn't exist yet.
+	mockBody := `{"status": 200, "headers": {}, "body": ""}`
+	req := httptest.NewRequest(http.MethodPut, "/e/auto-mock/mock", strings.NewReader(mockBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	// Endpoint should be auto-created.
+	ep, err := repo.GetEndpoint(nil, "auto-mock")
+	if err != nil {
+		t.Fatalf("endpoint was not auto-created: %v", err)
+	}
+	if ep.ID != "auto-mock" {
+		t.Errorf("expected endpoint id 'auto-mock', got %q", ep.ID)
+	}
+}
