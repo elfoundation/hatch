@@ -204,6 +204,132 @@ func TestSSEStreamReceivesEventOnCapture(t *testing.T) {
 	cancel()
 }
 
+func TestInspectReturnsHTML(t *testing.T) {
+	repo := newFakeRepo()
+	repo.CreateEndpoint(nil, "ep")
+	repo.AppendRequest(nil, "ep", &store.Request{
+		Method:  "POST",
+		Path:    "/ep/webhook",
+		Headers: `{"Content-Type":"application/json"}`,
+		Query:   "foo=bar",
+		Body:    []byte(`{"msg":"hello"}`),
+	})
+
+	r := testRouter(repo)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest("GET", "/e/ep", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	ct := w.Header().Get("Content-Type")
+	if !strings.Contains(ct, "text/html") {
+		t.Fatalf("expected text/html Content-Type, got %q", ct)
+	}
+
+	body := w.Body.String()
+
+	// Should contain the endpoint ID.
+	if !strings.Contains(body, "ep") {
+		t.Error("missing endpoint ID in HTML")
+	}
+
+	// Should contain the request method badge.
+	if !strings.Contains(body, "POST") {
+		t.Error("missing POST method in HTML")
+	}
+
+	// Should contain the request path.
+	if !strings.Contains(body, "/ep/webhook") {
+		t.Error("missing request path in HTML")
+	}
+
+	// Should contain the header JSON.
+	if !strings.Contains(body, "Content-Type") {
+		t.Error("missing Content-Type header in HTML")
+	}
+
+	// Should contain the query string.
+	if !strings.Contains(body, "foo=bar") {
+		t.Error("missing query string in HTML")
+	}
+
+	// Should contain the body content (html/template escapes quotes).
+	if !strings.Contains(body, "msg") || !strings.Contains(body, "hello") {
+		t.Error("missing request body content in HTML")
+	}
+
+	// Should contain the replay button.
+	if !strings.Contains(body, "Replay") {
+		t.Error("missing Replay button in HTML")
+	}
+
+	// Should contain SSE EventSource script.
+	if !strings.Contains(body, "EventSource") {
+		t.Error("missing EventSource in HTML")
+	}
+}
+
+func TestInspectEmptyState(t *testing.T) {
+	repo := newFakeRepo()
+	repo.CreateEndpoint(nil, "new-ep")
+
+	r := testRouter(repo)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest("GET", "/e/new-ep", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	body := w.Body.String()
+
+	// Should show the "waiting for requests" empty state.
+	if !strings.Contains(body, "Waiting for requests") {
+		t.Error("missing empty state message")
+	}
+
+	// Should show the usage hint with the endpoint ID.
+	if !strings.Contains(body, "/new-ep") {
+		t.Error("missing usage hint with endpoint ID")
+	}
+
+	// No request cards should be rendered.
+	if strings.Contains(body, `class="request"`) {
+		t.Error("unexpected request card in empty state")
+	}
+}
+
+func TestInspectAutoCreatesEndpoint(t *testing.T) {
+	repo := newFakeRepo()
+
+	// The endpoint doesn't exist yet.
+	r := testRouter(repo)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest("GET", "/e/auto-ep", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	// The endpoint should now exist in the repo.
+	ep, err := repo.GetEndpoint(nil, "auto-ep")
+	if err != nil {
+		t.Fatalf("endpoint was not auto-created: %v", err)
+	}
+	if ep.ID != "auto-ep" {
+		t.Errorf("expected endpoint ID 'auto-ep', got %q", ep.ID)
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, "auto-ep") {
+		t.Error("missing endpoint ID in auto-created page")
+	}
+	if !strings.Contains(body, "Waiting for requests") {
+		t.Error("missing empty state for auto-created endpoint")
+	}
+}
+
 func TestCaptureReturnsJSON200(t *testing.T) {
 	r := testRouter(newFakeRepo())
 	w := httptest.NewRecorder()

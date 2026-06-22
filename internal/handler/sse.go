@@ -39,6 +39,19 @@ func (h *sseHub) unsubscribe(endpointID string, ch chan []byte) {
 	}
 }
 
+// sseRequest is the JSON payload sent over SSE.
+// It uses string for Body to avoid base64 encoding.
+type sseRequest struct {
+	ID         string `json:"id"`
+	EndpointID string `json:"endpoint_id"`
+	Method     string `json:"method"`
+	Path       string `json:"path"`
+	Headers    string `json:"headers"`
+	Query      string `json:"query"`
+	Body       string `json:"body"`
+	CreatedAt  string `json:"created_at"`
+}
+
 func (h *sseHub) broadcast(endpointID string, req *store.Request) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -46,7 +59,17 @@ func (h *sseHub) broadcast(endpointID string, req *store.Request) {
 	if subs == nil {
 		return
 	}
-	data, err := json.Marshal(req)
+	sseReq := sseRequest{
+		ID:         req.ID,
+		EndpointID: req.EndpointID,
+		Method:     req.Method,
+		Path:       req.Path,
+		Headers:    req.Headers,
+		Query:      req.Query,
+		Body:       string(req.Body),
+		CreatedAt:  req.CreatedAt,
+	}
+	data, err := json.Marshal(sseReq)
 	if err != nil {
 		return
 	}

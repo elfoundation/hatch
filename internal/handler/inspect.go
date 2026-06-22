@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/elfoundation/hatch/internal/store"
 )
@@ -17,6 +19,7 @@ type inspectPageData struct {
 // inspectTemplate is the server-rendered HTML for the inspect page.
 var inspectTemplate = template.Must(template.New("inspect").Funcs(template.FuncMap{
 	"prettyJSON": prettyJSON,
+	"formatTime": formatTime,
 }).Parse(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,7 +91,7 @@ var inspectTemplate = template.Must(template.New("inspect").Funcs(template.FuncM
     <div class="request-header" onclick="toggleRequest('{{.ID}}')">
       <span class="method {{.Method}}">{{.Method}}</span>
       <span class="path">{{.Path}}</span>
-      <span class="time">{{.CreatedAt}}</span>
+      <span class="time" title="{{.CreatedAt}}">{{formatTime .CreatedAt}}</span>
       <button class="replay-btn" onclick="event.stopPropagation(); openReplay('{{.ID}}')" title="Replay this request">&#x21BA; Replay</button>
     </div>
     <div class="request-body" id="body-{{.ID}}">
@@ -200,6 +203,39 @@ function renderReplayResult(el, data) {
   el.innerHTML = html;
 }
 
+function formatTimeStr(ts) {
+  try { var d = new Date(ts); if (isNaN(d.getTime())) return ts; } catch(_) { return ts; }
+  var now = new Date();
+  var diff = Math.floor((now - d) / 1000);
+  if (diff < 5) return 'just now';
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function buildRequestBody(req) {
+  var html = '';
+  if (req.headers) {
+    var h = req.headers;
+    if (typeof h === 'string') { try { h = JSON.parse(h); } catch(_) { h = null; } }
+    if (h && Object.keys(h).length > 0) {
+      html += '<div class="section"><div class="section-label">Headers</div><pre>' + escapeHtml(JSON.stringify(h, null, 2)) + '</pre></div>';
+    }
+  }
+  if (req.query) {
+    html += '<div class="section"><div class="section-label">Query</div><pre>' + escapeHtml(req.query) + '</pre></div>';
+  }
+  if (req.body) {
+    var b = typeof req.body === 'string' ? req.body : '';
+    if (b) {
+      html += '<div class="section"><div class="section-label">Body</div><pre>' + escapeHtml(b) + '</pre></div>';
+    }
+  }
+  return html;
+}
+
 function escapeHtml(str) {
   var div = document.createElement('div');
   div.appendChild(document.createTextNode(str));
@@ -222,10 +258,10 @@ function escapeHtml(str) {
       div.innerHTML = '<div class="request-header" onclick="toggleRequest(\'' + req.id + '\')">' +
         '<span class="method ' + req.method + '">' + req.method + '</span>' +
         '<span class="path">' + req.path + '</span>' +
-        '<span class="time">' + req.created_at + '</span>' +
+        '<span class="time" title="' + req.created_at + '">' + formatTimeStr(req.created_at) + '</span>' +
         '<button class="replay-btn" onclick="event.stopPropagation(); openReplay(\'' + req.id + '\')">&#x21BA; Replay</button>' +
         '</div>' +
-        '<div class="request-body" id="body-' + req.id + '"></div>' +
+        '<div class="request-body" id="body-' + req.id + '">' + buildRequestBody(req) + '</div>' +
         '<div class="replay-panel" id="replay-' + req.id + '">' +
         '<input type="text" class="replay-url-input" id="replay-url-' + req.id + '" placeholder="https://myapp.local/webhook" value="">' +
         '<div class="replay-actions">' +
@@ -278,4 +314,31 @@ func prettyJSON(raw string) string {
 		return raw
 	}
 	return string(b)
+}
+
+// formatTime displays an ISO 8601 timestamp as a short relative or absolute string.
+func formatTime(raw string) string {
+	t, err := time.Parse("2006-01-02T15:04:05.000Z07:00", raw)
+	if err != nil {
+		// Try a few common variants.
+		t, err = time.Parse("2006-01-02T15:04:05Z07:00", raw)
+	}
+	if err != nil {
+		return raw
+	}
+	d := time.Since(t)
+	switch {
+	case d < 5*time.Second:
+		return "just now"
+	case d < time.Minute:
+		return fmt.Sprintf("%ds ago", int(d.Seconds()))
+	case d < time.Hour:
+		return fmt.Sprintf("%dm ago", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%dh ago", int(d.Hours()))
+	case d < 7*24*time.Hour:
+		return fmt.Sprintf("%dd ago", int(d.Hours()/24))
+	default:
+		return t.Format("Jan 2, 15:04")
+	}
 }
