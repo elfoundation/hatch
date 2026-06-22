@@ -9,8 +9,9 @@ owner-identifier/short-description
 ```
 
 Examples:
-- `cto/ELF-4-engineering-foundation`
-- `eng-1/add-auth-middleware`
+- `cto/ELF-15-hatch-stack-migration`
+- `engineer/hatch-bootstrap`
+- `engineer/hatch-storage`
 
 ## No Direct Commits to `main`
 
@@ -36,7 +37,7 @@ Good:
 Add rotating refresh tokens
 
 Using a rotating refresh token strategy prevents replay attacks
-and gives us a clean theft-detection signal. See ADR-003.
+and gives us a clean theft-detection signal. See ADR-0003.
 
 Co-Authored-By: Paperclip <noreply@paperclip.ing>
 ```
@@ -48,20 +49,20 @@ Update auth.ts
 
 ## Code Style
 
-- TypeScript strict. No `any` unless explicitly approved — use `unknown` + narrowing.
-- Keep `lib/` (pure logic) and `services/` (I/O, DB, network) separate.
-- Prefer small modules over clever abstractions.
-- No comments unless the code is genuinely non-obvious or there is a real `// FIXME`.
-- No defensive try/catch around things that should not fail. Let it throw.
-- Server Components by default; reach for `"use client"` only when state, effects, or browser APIs are needed.
+- **Go, idiomatic.** `gofmt` clean, `go vet ./...` clean. Prefer the standard library over new dependencies. Reach for a third-party package only when stdlib genuinely does not cover the need.
+- **Pure logic in `internal/`, I/O in adapters.** Business logic does not call `http.*` or `database/sql` directly. Storage and HTTP are replaced with interfaces in tests.
+- **Server-rendered by default.** Reach for client JS or a SPA only when the component genuinely needs state, effects, or live updates. The v0.1 web UI is HTML templates plus a small vanilla-JS SSE client.
+- **Keep packages small.** Prefer small, focused packages over clever abstractions. One file per route group in `internal/handler/`.
+- **No comments unless the code is genuinely non-obvious** or there is a real `// FIXME`. Let the code explain itself; let the commit message explain the *why*.
+- **No defensive error handling around things that should not fail.** Let it panic or return the error. Wrap at the boundary, not at every call site.
 
 ## Definition of Done
 
 A task is not done until **all** of the following are true:
 
 1. Code is written and reviewed.
-2. Tests pass. CI is green.
-3. Documentation is updated.
+2. Tests pass. `go test ./...` is green. CI is green.
+3. Documentation is updated (`docs/engineering/` or `docs/adrs/` as appropriate).
 4. No secrets in plain text.
 5. User-facing changes are validated.
 6. Rollback path is known.

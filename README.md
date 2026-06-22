@@ -11,18 +11,23 @@ El Foundation builds institutions that outlast their founders. We create technol
 1. Read the [company charter](docs/company/charter.md) to understand why we exist.
 2. Read the [operating model](docs/company/operating-model.md) to understand how decisions are made.
 3. Read [CONTRIBUTING.md](CONTRIBUTING.md) before making any changes.
+4. Read [docs/engineering/local-dev.md](docs/engineering/local-dev.md) for the day-to-day workflow.
+5. Read [docs/engineering/hatch-architecture.md](docs/engineering/hatch-architecture.md) for the component map.
 
 ## Repository Layout
 
 ```
 ├── .github/workflows/    # CI/CD definitions
+├── cmd/hatch/            # Server entrypoint (Go binary)
 ├── docs/
 │   ├── company/          # Founding documents (charter, org, etc.)
-│   ├── engineering/      # Engineering standards and decisions
+│   ├── engineering/      # Engineering standards, architecture, local dev
 │   └── adrs/             # Architecture Decision Records
-├── apps/                 # Application code (TBD — created when product work begins)
-├── packages/             # Shared libraries and packages
-└── scripts/              # Automation and utility scripts
+├── internal/             # Go packages (handler, store, ...)
+├── Dockerfile            # Multi-stage static binary build (golang → scratch)
+├── docker-compose.yml    # Local stack with optional Caddy sidecar
+├── Caddyfile             # TLS reverse proxy for the demo host
+└── go.mod                # Go module definition
 ```
 
 ## Hatch — Deploy in one command
@@ -34,7 +39,14 @@ Hatch is a self-hostable HTTP request inspector + mocker. Ship it to any VPS wit
 ```bash
 docker compose up --build
 # Hatch UI: http://localhost:8080
-# Capture endpoint: http://localhost:8080/{endpoint-id}
+# Health check: http://localhost:8080/healthz
+```
+
+Or run the binary directly:
+
+```bash
+go run ./cmd/hatch
+# Health check: http://localhost:8080/healthz
 ```
 
 ### Production (with HTTPS via Caddy)
@@ -64,7 +76,7 @@ Caddy terminates TLS and reverse-proxies to the Hatch Go binary. The Hatch conta
 
 ## Technology Stack
 
-See [docs/engineering/tech-stack.md](docs/engineering/tech-stack.md) for current choices and rationale.
+See [docs/engineering/tech-stack.md](docs/engineering/tech-stack.md) for current choices and rationale, and [docs/adrs/](docs/adrs/) for the decision records that produced them.
 
 ## Contributing
 
@@ -72,4 +84,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Proprietary — All rights reserved.
+Apache-2.0 — see [LICENSE](LICENSE).
