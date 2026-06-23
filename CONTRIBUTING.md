@@ -38,8 +38,6 @@ Add rotating refresh tokens
 
 Using a rotating refresh token strategy prevents replay attacks
 and gives us a clean theft-detection signal. See ADR-0003.
-
-Co-Authored-By: Paperclip <noreply@paperclip.ing>
 ```
 
 Bad:

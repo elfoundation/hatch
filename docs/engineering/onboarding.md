@@ -3,7 +3,6 @@
 ## Before Day 1
 
 - [ ] Access to GitHub org granted
-- [ ] Access to Paperclip workspace granted
 - [ ] Added to project channels / async standup
 
 ## Day 1: Context
