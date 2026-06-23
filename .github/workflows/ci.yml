@@ -50,3 +50,15 @@ jobs:
         with:
           globs: '**/*.md'
         continue-on-error: true
+
+  check-paperclip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for PR range
+      - name: Check for Paperclip references in commit messages
+        run: ./scripts/check-paperclip.sh
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}

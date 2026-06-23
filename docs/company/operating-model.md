@@ -24,7 +24,7 @@ We run a **advice-and-decide** model, not consensus.
 ## Work Ownership
 
 - **One task = one owner = one branch.** No shared ownership. If a task is too big for one person, split it.
-- **Tasks are issues in Paperclip.** Backlog → assigned → in progress → review → done.
+- **Tasks are tracked in a structured workflow.** Backlog → assigned → in progress → review → done.
 - **Context is durable.** Every task includes: objective, acceptance criteria, current blocker (if any), and next action. When an owner changes, the context transfers in writing.
 
 ## Review and Shipping
