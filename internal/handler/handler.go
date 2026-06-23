@@ -29,6 +29,9 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	// Health check.
 	r.Get("/healthz", Healthz)
 
+	// JSON API v1 routes.
+	h.RegisterV1Routes(r)
+
 	// Inspect page: server-rendered request list.
 	r.Get("/e/{endpointID}", HandleInspect(h.Repo))
 

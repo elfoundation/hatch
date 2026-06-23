@@ -116,6 +116,27 @@ func (r *sqliteRepo) SetMock(ctx context.Context, mock *MockConfig) error {
 	return nil
 }
 
+func (r *sqliteRepo) SearchRequests(ctx context.Context, endpointID string, query string, limit int) ([]*Request, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	// Simple LIKE search across text fields. Convert body to text.
+	rows, err := r.db.QueryContext(ctx, `SELECT id, endpoint_id, method, path, headers, query, body, created_at FROM requests WHERE endpoint_id = ? AND (method LIKE ? OR path LIKE ? OR headers LIKE ? OR query LIKE ? OR CAST(body AS TEXT) LIKE ?) ORDER BY created_at DESC LIMIT ?`, endpointID, "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", "%"+query+"%", limit)
+	if err != nil {
+		return nil, fmt.Errorf("store: search requests: %w", err)
+	}
+	defer rows.Close()
+	var out []*Request
+	for rows.Next() {
+		var req Request
+		if err := rows.Scan(&req.ID, &req.EndpointID, &req.Method, &req.Path, &req.Headers, &req.Query, &req.Body, &req.CreatedAt); err != nil {
+			return nil, fmt.Errorf("store: scan request: %w", err)
+		}
+		out = append(out, &req)
+	}
+	return out, rows.Err()
+}
+
 func (r *sqliteRepo) Close() error { return r.db.Close() }
 
 func utcNow() string { return time.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00") }

@@ -34,6 +34,7 @@ type Repository interface {
 	AppendRequest(ctx context.Context, endpointID string, req *Request) error
 	GetRequest(ctx context.Context, id string) (*Request, error)
 	ListRequests(ctx context.Context, endpointID string, limit int) ([]*Request, error)
+	SearchRequests(ctx context.Context, endpointID string, query string, limit int) ([]*Request, error)
 	GetMock(ctx context.Context, endpointID string) (*MockConfig, error)
 	SetMock(ctx context.Context, mock *MockConfig) error
 	Close() error

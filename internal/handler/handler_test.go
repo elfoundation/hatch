@@ -57,6 +57,25 @@ func (f *fakeRepo) GetRequest(_ context.Context, id string) (*store.Request, err
 func (f *fakeRepo) ListRequests(_ context.Context, _ string, _ int) ([]*store.Request, error) {
 	return f.requests, nil
 }
+func (f *fakeRepo) SearchRequests(_ context.Context, _ string, query string, limit int) ([]*store.Request, error) {
+	if query == "" {
+		return f.requests, nil
+	}
+	var matched []*store.Request
+	for _, r := range f.requests {
+		if strings.Contains(r.Method, query) ||
+			strings.Contains(r.Path, query) ||
+			strings.Contains(r.Headers, query) ||
+			strings.Contains(r.Query, query) ||
+			strings.Contains(string(r.Body), query) {
+			matched = append(matched, r)
+			if limit > 0 && len(matched) >= limit {
+				break
+			}
+		}
+	}
+	return matched, nil
+}
 func (f *fakeRepo) GetMock(_ context.Context, endpointID string) (*store.MockConfig, error) {
 	m, ok := f.mocks[endpointID]
 	if !ok {
