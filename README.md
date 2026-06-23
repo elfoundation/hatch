@@ -34,6 +34,8 @@ El Foundation builds institutions that outlast their founders. We create technol
 
 Hatch is a self-hostable HTTP request inspector + mocker. Ship it to any VPS with Docker.
 
+**[Read why we are building Hatch →](https://hatch.sh/blog/why-we-are-building-hatch)**
+
 ### Quick start (local dev, no HTTPS)
 
 ```bash
