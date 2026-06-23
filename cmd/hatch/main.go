@@ -12,6 +12,12 @@ import (
 )
 
 func main() {
+	// CLI mode: if a subcommand is provided, handle it and exit.
+	if cliMain() {
+		return
+	}
+
+	// Server mode: start the HTTP server.
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
