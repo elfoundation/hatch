@@ -1,15 +1,12 @@
-name: Build hatch.surf
+name: Deploy hatch.surf
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-env:
-  IMAGE_NAME: hatch-web
-
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
@@ -18,7 +15,23 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
-          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.IMAGE_NAME }}:latest
+          docker build -t hatch-web:latest .
           echo "Docker image built successfully"
-          docker images | grep ${{ env.IMAGE_NAME }}
+
+      - name: Deploy container
+        run: |
+          docker stop hatch-web 2>/dev/null || true
+          docker rm hatch-web 2>/dev/null || true
+          docker compose up -d
+          echo "Container deployed"
+
+      - name: Verify deployment
+        run: |
+          sleep 5
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 | grep -q "200"; then
+            echo "✅ hatch.surf deployed successfully!"
+          else
+            echo "❌ Deployment failed!"
+            docker logs hatch-web
+            exit 1
+          fi
