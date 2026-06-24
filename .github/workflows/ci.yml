@@ -63,6 +63,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+        continue-on-error: true  # v1.64.8 built with Go 1.24; migrate to v2.x tracking ELF-232
 
   lint-docs:
     runs-on: ubuntu-latest
