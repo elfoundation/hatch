@@ -85,6 +85,27 @@ rsync -avz --delete site/ root@46.250.250.48:/var/www/hatch.surf/
 ssh root@46.250.250.48 "nginx -t && systemctl reload nginx"
 ```
 
+### Direct Deployment (When Running on Server)
+
+If you're running on the same server as hatch.surf (e.g., in a Paperclip agent environment), you can deploy directly without SSH:
+
+```bash
+# Copy files directly to the deployment directory
+sudo cp site/index.html /var/www/hatch.surf/index.html
+sudo cp site/style.css /var/www/hatch.surf/style.css
+sudo cp site/main.js /var/www/hatch.surf/main.js
+
+# Set correct ownership
+sudo chown www-data:www-data /var/www/hatch.surf/index.html
+sudo chown www-data:www-data /var/www/hatch.surf/style.css
+sudo chown www-data:www-data /var/www/hatch.surf/main.js
+
+# Verify deployment
+curl -s -I https://hatch.surf
+```
+
+**Note:** This method was used successfully in [ELF-196](/ELF/issues/ELF-196) when the agent had direct server access.
+
 ## Verification
 
 ### Check Site Status
@@ -168,3 +189,4 @@ sudo tar -czf nginx-hatch-backup.tar.gz /etc/nginx/sites-available/hatch.surf.co
 
 - [ELF-192](/ELF/issues/ELF-192) - Build homepage and deploy it on hatch.surf
 - [ELF-171](/ELF/issues/ELF-171) - Server setup (nginx, SSL)
+- [ELF-196](/ELF/issues/ELF-196) - Deploy redesigned hatch.surf homepage (v2 files from ELF-195)
