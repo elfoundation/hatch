@@ -91,6 +91,8 @@ func (f *FakeRepository) SetMock(_ context.Context, mock *store.MockConfig) erro
 
 func (f *FakeRepository) Close() error { return nil }
 
+func (f *FakeRepository) Ping(_ context.Context) error { return nil }
+
 type notFoundError struct{}
 
 func (e *notFoundError) Error() string { return "not found" }

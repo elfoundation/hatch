@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -453,4 +454,178 @@ func readBody(resp *http.Response) string {
 	}
 	b, _ := io.ReadAll(resp.Body)
 	return string(b)
+}
+
+// TestServerConfigurations tests various server configurations.
+func TestServerConfigurations(t *testing.T) {
+	// Test with default port.
+	t.Run("default_port", func(t *testing.T) {
+		repo, err := store.Open(":memory:")
+		if err != nil {
+			t.Fatalf("open store: %v", err)
+		}
+		defer repo.Close()
+
+		r := chi.NewRouter()
+		h := handler.New(repo)
+		h.RegisterRoutes(r)
+
+		srv := httptest.NewServer(r)
+		defer srv.Close()
+
+		resp, err := http.Get(srv.URL + "/healthz")
+		if err != nil {
+			t.Fatalf("GET /healthz: %v", err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d", resp.StatusCode)
+		}
+	})
+
+	// Test with custom headers.
+	t.Run("custom_headers", func(t *testing.T) {
+		repo, err := store.Open(":memory:")
+		if err != nil {
+			t.Fatalf("open store: %v", err)
+		}
+		defer repo.Close()
+
+		r := chi.NewRouter()
+		h := handler.New(repo)
+		h.RegisterRoutes(r)
+
+		srv := httptest.NewServer(r)
+		defer srv.Close()
+
+		req, _ := http.NewRequest("POST", srv.URL+"/test", strings.NewReader(`{"key":"value"}`))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-Custom-Header", "test-value")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("POST /test: %v", err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d", resp.StatusCode)
+		}
+	})
+}
+
+// TestMultipleEndpointsConcurrency tests concurrent access to multiple endpoints.
+func TestMultipleEndpointsConcurrency(t *testing.T) {
+	repo, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer repo.Close()
+
+	r := chi.NewRouter()
+	h := handler.New(repo)
+	h.RegisterRoutes(r)
+
+	srv := httptest.NewServer(r)
+	defer srv.Close()
+
+	client := &http.Client{Timeout: 5 * time.Second}
+
+	// Create multiple endpoints concurrently.
+	var wg sync.WaitGroup
+	numEndpoints := 5
+
+	for i := 0; i < numEndpoints; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			endpoint := fmt.Sprintf("endpoint-%d", idx)
+			for j := 0; j < 10; j++ {
+				body := fmt.Sprintf(`{"endpoint":%d,"request":%d}`, idx, j)
+				resp, err := client.Post(srv.URL+"/"+endpoint, "application/json", strings.NewReader(body))
+				if err != nil {
+					t.Errorf("endpoint %d, request %d: %v", idx, j, err)
+					return
+				}
+				resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					t.Errorf("endpoint %d, request %d: expected 200, got %d", idx, j, resp.StatusCode)
+					return
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	// Verify all endpoints have requests.
+	for i := 0; i < numEndpoints; i++ {
+		endpoint := fmt.Sprintf("endpoint-%d", i)
+		reqs, err := repo.ListRequests(context.Background(), endpoint, 100)
+		if err != nil {
+			t.Fatalf("list requests for %s: %v", endpoint, err)
+		}
+		if len(reqs) != 10 {
+			t.Errorf("expected 10 requests for %s, got %d", endpoint, len(reqs))
+		}
+	}
+}
+
+// TestErrorHandling tests error handling scenarios.
+func TestErrorHandling(t *testing.T) {
+	repo, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer repo.Close()
+
+	r := chi.NewRouter()
+	h := handler.New(repo)
+	h.RegisterRoutes(r)
+
+	srv := httptest.NewServer(r)
+	defer srv.Close()
+
+	client := &http.Client{Timeout: 5 * time.Second}
+
+	// Test invalid JSON body.
+	t.Run("invalid_json", func(t *testing.T) {
+		resp, err := client.Post(srv.URL+"/test", "application/json", strings.NewReader("not json"))
+		if err != nil {
+			t.Fatalf("POST /test: %v", err)
+		}
+		resp.Body.Close()
+		// Should still return 200 (capture accepts any body).
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d", resp.StatusCode)
+		}
+	})
+
+	// Test missing endpoint ID (root path).
+	t.Run("missing_endpoint", func(t *testing.T) {
+		resp, err := client.Get(srv.URL + "/")
+		if err != nil {
+			t.Fatalf("GET /: %v", err)
+		}
+		resp.Body.Close()
+		// Chi returns 404 for unmatched routes.
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatalf("expected 404, got %d", resp.StatusCode)
+		}
+	})
+
+	// Test replay with invalid request ID.
+	t.Run("replay_invalid_id", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", srv.URL+"/e/test/requests/nonexistent/replay",
+			strings.NewReader(`{"target_url":"https://example.com"}`))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("replay: %v", err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatalf("expected 404, got %d", resp.StatusCode)
+		}
+	})
 }

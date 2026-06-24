@@ -38,6 +38,7 @@ type Repository interface {
 	GetMock(ctx context.Context, endpointID string) (*MockConfig, error)
 	SetMock(ctx context.Context, mock *MockConfig) error
 	Close() error
+	Ping(ctx context.Context) error
 }
 
 var _ Repository = (*sqliteRepo)(nil)

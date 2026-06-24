@@ -232,3 +232,84 @@ func TestMigrateIdempotent(t *testing.T) {
 		t.Fatalf("requests table: %v", err)
 	}
 }
+
+func TestSearchRequests(t *testing.T) {
+	repo := openTestRepo(t)
+	ctx := context.Background()
+	e, _ := repo.CreateEndpoint(ctx, "search-test")
+
+	// Add requests with different content.
+	repo.AppendRequest(ctx, e.ID, &Request{Method: "GET", Path: "/users", Headers: `{"Accept":"json"}`})
+	repo.AppendRequest(ctx, e.ID, &Request{Method: "POST", Path: "/orders", Body: []byte(`{"item":"apple"}`)})
+	repo.AppendRequest(ctx, e.ID, &Request{Method: "DELETE", Path: "/users/123"})
+	repo.AppendRequest(ctx, e.ID, &Request{Method: "PUT", Path: "/products", Query: "category=electronics"})
+
+	// Search for "users".
+	reqs, err := repo.SearchRequests(ctx, e.ID, "users", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reqs) != 2 {
+		t.Errorf("expected 2 requests matching 'users', got %d", len(reqs))
+	}
+
+	// Search for "apple" (in body).
+	reqs, err = repo.SearchRequests(ctx, e.ID, "apple", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reqs) != 1 {
+		t.Errorf("expected 1 request matching 'apple', got %d", len(reqs))
+	}
+
+	// Search for "electronics" (in query).
+	reqs, err = repo.SearchRequests(ctx, e.ID, "electronics", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reqs) != 1 {
+		t.Errorf("expected 1 request matching 'electronics', got %d", len(reqs))
+	}
+
+	// Empty query returns all.
+	reqs, err = repo.SearchRequests(ctx, e.ID, "", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reqs) != 4 {
+		t.Errorf("expected 4 requests with empty query, got %d", len(reqs))
+	}
+
+	// Search with limit.
+	reqs, err = repo.SearchRequests(ctx, e.ID, "users", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reqs) != 1 {
+		t.Errorf("expected 1 request with limit=1, got %d", len(reqs))
+	}
+}
+
+func TestOpenInMemory(t *testing.T) {
+	repo, err := Open(":memory:")
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer repo.Close()
+
+	// Verify the repo works.
+	e, err := repo.CreateEndpoint(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("CreateEndpoint: %v", err)
+	}
+	if e.ID != "test" {
+		t.Errorf("expected ID 'test', got %q", e.ID)
+	}
+}
+
+func TestNewSQLiteRepoNilDB(t *testing.T) {
+	_, err := NewSQLiteRepo(nil)
+	if err == nil {
+		t.Fatal("expected error for nil db")
+	}
+}

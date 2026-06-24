@@ -235,7 +235,7 @@ func (h *Handler) v1OpenAPI(w http.ResponseWriter, r *http.Request) {
 								"application/json": map[string]interface{}{
 									"schema": map[string]interface{}{
 										"$ref": "#/components/schemas/ReplayResponse",
-								},
+									},
 								},
 							},
 						},
@@ -292,18 +292,18 @@ func (h *Handler) v1OpenAPI(w http.ResponseWriter, r *http.Request) {
 				"StoredRequest": map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"id":           map[string]interface{}{"type": "string"},
-						"endpoint_id":  map[string]interface{}{"type": "string"},
-						"method":       map[string]interface{}{"type": "string"},
-						"path":         map[string]interface{}{"type": "string"},
-						"headers":      map[string]interface{}{"type": "string"},
-						"query":        map[string]interface{}{"type": "string"},
-						"body":         map[string]interface{}{"type": "string", "format": "byte"},
-						"created_at":   map[string]interface{}{"type": "string", "format": "date-time"},
+						"id":          map[string]interface{}{"type": "string"},
+						"endpoint_id": map[string]interface{}{"type": "string"},
+						"method":      map[string]interface{}{"type": "string"},
+						"path":        map[string]interface{}{"type": "string"},
+						"headers":     map[string]interface{}{"type": "string"},
+						"query":       map[string]interface{}{"type": "string"},
+						"body":        map[string]interface{}{"type": "string", "format": "byte"},
+						"created_at":  map[string]interface{}{"type": "string", "format": "date-time"},
 					},
 				},
 				"ReplayRequest": map[string]interface{}{
-					"type": "object",
+					"type":     "object",
 					"required": []string{"target_url"},
 					"properties": map[string]interface{}{
 						"target_url": map[string]interface{}{"type": "string", "format": "uri"},

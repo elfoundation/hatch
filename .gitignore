@@ -11,6 +11,7 @@ go.work
 # Build
 /bin
 /dist
+/data
 
 # Runtime data
 data/
@@ -26,3 +27,4 @@ coverage.out
 .DS_Store
 /hatch
 hatch.exe
+site/*.bak

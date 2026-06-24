@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/elfoundation/hatch/internal/store"
@@ -175,6 +176,54 @@ func TestV1OpenAPI(t *testing.T) {
 	}
 	if _, ok := paths["/v1/endpoints/{endpointID}/mock"]; !ok {
 		t.Error("missing mock path")
+	}
+}
+
+func TestV1ReplayRequest(t *testing.T) {
+	repo := testutil.NewFakeRepository()
+	repo.CreateEndpoint(nil, "replay-ep")
+	repo.AppendRequest(nil, "replay-ep", &store.Request{
+		Method:  "POST",
+		Path:    "/webhook",
+		Headers: `{"Content-Type":"application/json"}`,
+		Query:   "foo=bar",
+		Body:    []byte(`{"msg":"hello"}`),
+	})
+	reqID := repo.Requests[0].ID
+
+	// Start a sink server.
+	sink := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Sink", "yes")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(`{"received": true}`))
+	}))
+	defer sink.Close()
+
+	// Set env to allow private replay.
+	t.Setenv("HATCH_ALLOW_PRIVATE_REPLAY", "true")
+
+	r := testRouter(repo)
+	body := `{"target_url": "` + sink.URL + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/endpoints/replay-ep/requests/"+reqID+"/replay", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp struct {
+		Status  int               `json:"status"`
+		Headers map[string]string `json:"headers"`
+		Body    string            `json:"body"`
+	}
+	json.NewDecoder(w.Body).Decode(&resp)
+	if resp.Status != 201 {
+		t.Errorf("expected status 201, got %d", resp.Status)
+	}
+	if resp.Headers["X-Sink"] != "yes" {
+		t.Errorf("expected X-Sink header, got %v", resp.Headers)
 	}
 }
 
