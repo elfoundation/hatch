@@ -13,25 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build and Deploy
         run: |
-          docker build -t hatch-web:latest .
-          echo "Docker image built successfully"
-
-      - name: Deploy container
-        run: |
-          docker stop hatch-web 2>/dev/null || true
-          docker rm hatch-web 2>/dev/null || true
-          docker compose up -d
-          echo "Container deployed"
-
-      - name: Verify deployment
-        run: |
-          sleep 5
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 | grep -q "200"; then
-            echo "✅ hatch.surf deployed successfully!"
-          else
-            echo "❌ Deployment failed!"
-            docker logs hatch-web
-            exit 1
-          fi
+          chmod +x deploy.sh
+          ./deploy.sh
