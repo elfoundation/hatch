@@ -3,16 +3,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@9
-
 # Install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Build the application
 COPY . .
-RUN pnpm build
+RUN npm run build
 
 # Stage 2: Production
 FROM nginx:alpine AS production
