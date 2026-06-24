@@ -79,6 +79,30 @@ Or with Node.js:
 npx serve site
 ```
 
+### Docker
+
+To run the site in Docker:
+
+```bash
+cd site
+# Build and run with docker compose
+docker compose up -d
+
+# Or build and run with docker
+docker build -t hatch-homepage .
+docker run -d -p 3000:80 hatch-homepage
+```
+
+The site will be available at http://localhost:3000
+
+To stop the container:
+
+```bash
+docker compose down
+# Or
+docker stop $(docker ps -q --filter ancestor=hatch-homepage)
+```
+
 ## SEO Checklist
 
 - [x] H1 = title
