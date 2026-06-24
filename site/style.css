@@ -1,6 +1,6 @@
 /* ============================================================
-   Hatch Homepage v2 — Dark Theme
-   Design system: OKLCH-inspired tokens, Inter + JetBrains Mono
+   Hatch Homepage — Dark Theme
+   Design tokens, Inter + JetBrains Mono, anime.js magic background
    ============================================================ */
 
 /* --- Reset --- */
@@ -13,22 +13,22 @@
 /* --- Tokens --- */
 :root {
     /* Surface */
-    --surface-0: #09090b;          /* deepest bg */
-    --surface-1: #111114;          /* cards, sections */
-    --surface-2: #1a1a1f;          /* elevated surfaces */
-    --surface-3: #232328;          /* borders, subtle dividers */
+    --surface-0: #09090b;
+    --surface-1: #111114;
+    --surface-2: #1a1a1f;
+    --surface-3: #232328;
 
     /* Brand */
-    --brand: #3b82f6;              /* blue-500 */
-    --brand-dim: #2563eb;          /* blue-600 hover */
+    --brand: #3b82f6;
+    --brand-dim: #2563eb;
     --brand-glow: rgba(59, 130, 246, 0.15);
     --brand-glow-strong: rgba(59, 130, 246, 0.25);
 
     /* Text */
-    --text-primary: #fafafa;       /* near-white */
-    --text-secondary: #a1a1aa;     /* zinc-400 */
-    --text-tertiary: #71717a;      /* zinc-500 */
-    --text-code: #e879f9;          /* fuchsia-400 for code highlights */
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --text-code: #e879f9;
 
     /* Code */
     --code-bg: #18181b;
@@ -39,18 +39,18 @@
     --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
 
     /* Spacing scale (4px base) */
-    --sp-1: 0.25rem;   /* 4 */
-    --sp-2: 0.5rem;    /* 8 */
-    --sp-3: 0.75rem;   /* 12 */
-    --sp-4: 1rem;      /* 16 */
-    --sp-5: 1.25rem;   /* 20 */
-    --sp-6: 1.5rem;    /* 24 */
-    --sp-8: 2rem;      /* 32 */
-    --sp-10: 2.5rem;   /* 40 */
-    --sp-12: 3rem;     /* 48 */
-    --sp-16: 4rem;     /* 64 */
-    --sp-20: 5rem;     /* 80 */
-    --sp-24: 6rem;     /* 96 */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.25rem;
+    --sp-6: 1.5rem;
+    --sp-8: 2rem;
+    --sp-10: 2.5rem;
+    --sp-12: 3rem;
+    --sp-16: 4rem;
+    --sp-20: 5rem;
+    --sp-24: 6rem;
 
     /* Radii */
     --radius-sm: 6px;
@@ -98,8 +98,37 @@ code {
     color: var(--text-code);
 }
 
-/* --- Particle canvas --- */
-#particle-canvas {
+/* --- Accessibility: skip link --- */
+.skip-to-content {
+    position: absolute;
+    top: -50px;
+    left: var(--sp-4);
+    background: var(--brand);
+    color: #fff;
+    padding: var(--sp-2) var(--sp-4);
+    z-index: 200;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    transition: top 0.2s ease;
+}
+
+.skip-to-content:focus {
+    top: 0;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* --- Accessibility: focus-visible --- */
+a:focus-visible,
+.btn:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+}
+
+/* --- Magic background layers --- */
+#magic-bg {
     position: fixed;
     top: 0;
     left: 0;
@@ -107,6 +136,138 @@ code {
     height: 100%;
     z-index: 0;
     pointer-events: none;
+    overflow: hidden;
+}
+
+/* Aurora gradient blobs */
+.magic-aurora {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    background: radial-gradient(circle, var(--brand) 0%, transparent 70%);
+    top: -10%;
+    left: -5%;
+    will-change: transform, opacity;
+}
+
+.magic-aurora--2 {
+    background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+    top: 40%;
+    right: -15%;
+    left: auto;
+    width: 500px;
+    height: 500px;
+    opacity: 0.1;
+}
+
+.magic-aurora--3 {
+    background: radial-gradient(circle, #06b6d4 0%, transparent 70%);
+    bottom: -10%;
+    left: 30%;
+    top: auto;
+    width: 450px;
+    height: 450px;
+    opacity: 0.08;
+}
+
+/* SVG rune circles */
+.magic-runes {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 900px;
+    height: 900px;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+}
+
+.rune {
+    fill: none;
+    stroke-width: 1;
+    opacity: 0;
+}
+
+.rune-outer {
+    stroke: var(--brand);
+    stroke-dasharray: 8 24;
+    opacity: 0.08;
+}
+
+.rune-mid {
+    stroke: #a855f7;
+    stroke-dasharray: 4 16;
+    opacity: 0.06;
+}
+
+.rune-inner {
+    stroke: #06b6d4;
+    stroke-dasharray: 12 8;
+    opacity: 0.05;
+}
+
+.rune-core {
+    stroke: var(--brand);
+    stroke-dasharray: 2 12;
+    opacity: 0.04;
+    stroke-width: 1.5;
+}
+
+/* Floating orbs container */
+.magic-orbs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.magic-orb {
+    position: absolute;
+    border-radius: 50%;
+    will-change: transform, opacity;
+}
+
+/* Connection lines SVG */
+.magic-connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Sparkle particles */
+.magic-sparkles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.magic-sparkle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: #fff;
+    will-change: opacity;
+}
+
+/* Cursor glow follower */
+.magic-cursor-glow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+    opacity: 0;
 }
 
 /* --- Container --- */
@@ -175,7 +336,7 @@ nav {
 .hero {
     position: relative;
     z-index: 1;
-    padding: calc(var(--sp-24) + 2rem) 0 var(--sp-20);
+    padding: calc(var(--sp-24) + 2rem) 0 var(--sp-16);
     text-align: center;
 }
 
@@ -233,6 +394,8 @@ nav {
     cursor: pointer;
     border: none;
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-primary {
@@ -304,7 +467,7 @@ nav {
 }
 
 .hero-terminal pre {
-    padding: var(--sp-5) var(--sp-5);
+    padding: var(--sp-5);
     overflow-x: auto;
     font-size: 0.82rem;
     line-height: 1.8;
@@ -326,7 +489,7 @@ nav {
 .features {
     position: relative;
     z-index: 1;
-    padding: var(--sp-24) 0;
+    padding: var(--sp-20) 0;
 }
 
 .features h2 {
@@ -349,13 +512,14 @@ nav {
     background: var(--surface-1);
     border: 1px solid var(--surface-3);
     border-radius: var(--radius-lg);
-    transition: border-color var(--duration-normal) var(--ease-out),
-                box-shadow var(--duration-normal) var(--ease-out);
+    transition: all var(--duration-normal) var(--ease-out);
+    transform: translateY(0);
 }
 
 .feature:hover {
     border-color: rgba(59, 130, 246, 0.3);
     box-shadow: 0 0 32px -8px var(--brand-glow);
+    transform: translateY(-4px);
 }
 
 .feature-icon {
@@ -384,11 +548,49 @@ nav {
     line-height: 1.65;
 }
 
+/* --- Tech strip --- */
+.tech-strip {
+    position: relative;
+    z-index: 1;
+    padding: var(--sp-12) 0;
+    border-top: 1px solid var(--surface-3);
+    border-bottom: 1px solid var(--surface-3);
+}
+
+.tech-items {
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-10);
+    flex-wrap: wrap;
+}
+
+.tech-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-1);
+}
+
+.tech-label {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+}
+
+.tech-value {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
 /* --- Why --- */
 .why {
     position: relative;
     z-index: 1;
-    padding: var(--sp-24) 0;
+    padding: var(--sp-20) 0;
     background: var(--surface-1);
     border-top: 1px solid var(--surface-3);
     border-bottom: 1px solid var(--surface-3);
@@ -444,7 +646,7 @@ nav {
 .final-cta {
     position: relative;
     z-index: 1;
-    padding: var(--sp-24) 0;
+    padding: var(--sp-20) 0;
     text-align: center;
 }
 
@@ -501,6 +703,149 @@ footer a:hover {
     transform: translateY(20px);
 }
 
+/* --- Blog --- */
+.blog-index {
+    position: relative;
+    z-index: 1;
+    padding: calc(var(--sp-24) + 2rem) 0 var(--sp-20);
+}
+
+.blog-index h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: var(--sp-10);
+    color: var(--text-primary);
+}
+
+.post-preview {
+    padding: var(--sp-8);
+    background: var(--surface-1);
+    border: 1px solid var(--surface-3);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--duration-normal) var(--ease-out),
+                box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.post-preview:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 32px -8px var(--brand-glow);
+}
+
+.post-preview h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: var(--sp-2);
+    letter-spacing: -0.02em;
+}
+
+.post-preview h2 a {
+    color: var(--text-primary);
+}
+
+.post-preview h2 a:hover {
+    color: var(--brand);
+}
+
+.post-preview time {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+}
+
+.post-preview p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: var(--sp-4) 0;
+}
+
+.read-more {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Blog post */
+.blog-post {
+    position: relative;
+    z-index: 1;
+    padding: calc(var(--sp-24) + 2rem) 0 var(--sp-20);
+}
+
+.post-header {
+    margin-bottom: var(--sp-10);
+    padding-bottom: var(--sp-6);
+    border-bottom: 1px solid var(--surface-3);
+}
+
+.post-header h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+    margin-bottom: var(--sp-3);
+    color: var(--text-primary);
+}
+
+.post-header time {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+}
+
+.post-content {
+    max-width: 680px;
+}
+
+.post-content p {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    margin-bottom: var(--sp-6);
+}
+
+.post-content h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: var(--sp-10) 0 var(--sp-4);
+    color: var(--text-primary);
+}
+
+.post-content pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: var(--radius-md);
+    padding: var(--sp-5);
+    overflow-x: auto;
+    margin-bottom: var(--sp-6);
+}
+
+.post-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.post-content strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .post-preview {
+        padding: var(--sp-6);
+    }
+
+    .post-content p {
+        font-size: 1rem;
+    }
+}
+
 /* --- Reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
     [data-animate] {
@@ -512,19 +857,23 @@ footer a:hover {
         transform: none;
     }
 
-    #particle-canvas {
+    .feature:hover {
+        transform: none;
+    }
+
+    #magic-bg {
         display: none;
     }
 }
 
-/* --- Responsive --- */
+/* --- Responsive: tablet --- */
 @media (max-width: 768px) {
     .container {
         padding: 0 var(--sp-4);
     }
 
     .hero {
-        padding: calc(var(--sp-20) + 1rem) 0 var(--sp-16);
+        padding: calc(var(--sp-20) + 1rem) 0 var(--sp-12);
     }
 
     .hero h1 {
@@ -567,8 +916,13 @@ footer a:hover {
         font-size: 0.75rem;
         padding: var(--sp-4);
     }
+
+    .tech-items {
+        gap: var(--sp-6);
+    }
 }
 
+/* --- Responsive: mobile --- */
 @media (max-width: 480px) {
     .hero-cta {
         flex-direction: column;
@@ -577,5 +931,50 @@ footer a:hover {
 
     .btn {
         justify-content: center;
+    }
+
+    /* Terminal horizontal scroll with fade indicator */
+    .hero-terminal {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-terminal::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(to right, transparent, var(--code-bg));
+        pointer-events: none;
+    }
+
+    .hero-terminal pre {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--surface-3) transparent;
+    }
+
+    .hero-terminal pre::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .hero-terminal pre::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .hero-terminal pre::-webkit-scrollbar-thumb {
+        background: var(--surface-3);
+        border-radius: 3px;
+    }
+
+    .tech-items {
+        gap: var(--sp-4);
+    }
+
+    .tech-item {
+        min-width: calc(50% - var(--sp-4));
     }
 }

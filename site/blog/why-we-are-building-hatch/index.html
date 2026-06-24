@@ -9,8 +9,8 @@
     <!-- Open Graph -->
     <meta property="og:title" content="Why we are building Hatch">
     <meta property="og:description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
-    <meta property="og:image" content="https://hatch.sh/brand/og/default.png">
-    <meta property="og:url" content="https://hatch.sh/blog/why-we-are-building-hatch">
+    <meta property="og:image" content="https://hatch.surf/brand/og/default.png">
+    <meta property="og:url" content="https://hatch.surf/blog/why-we-are-building-hatch">
     <meta property="og:type" content="article">
     <meta property="article:published_time" content="2026-06-23">
     <meta property="article:author" content="El Foundation">
@@ -19,13 +19,30 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Why we are building Hatch">
     <meta name="twitter:description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
-    <meta name="twitter:image" content="https://hatch.sh/brand/og/default.png">
+    <meta name="twitter:image" content="https://hatch.surf/brand/og/default.png">
     
-    <link rel="canonical" href="https://hatch.sh/blog/why-we-are-building-hatch">
+    <link rel="canonical" href="https://hatch.surf/blog/why-we-are-building-hatch">
     <link rel="icon" type="image/png" href="/brand/favicon/favicon.png">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+    <!-- Anime.js magical background layers -->
+    <div id="magic-bg" aria-hidden="true">
+        <div class="magic-aurora"></div>
+        <div class="magic-aurora magic-aurora--2"></div>
+        <div class="magic-aurora magic-aurora--3"></div>
+        <svg class="magic-runes" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+            <circle class="rune rune-outer" cx="400" cy="400" r="350" />
+            <circle class="rune rune-mid" cx="400" cy="400" r="260" />
+            <circle class="rune rune-inner" cx="400" cy="400" r="170" />
+            <circle class="rune rune-core" cx="400" cy="400" r="80" />
+        </svg>
+        <div class="magic-orbs" id="magic-orbs"></div>
+        <svg class="magic-connections" id="magic-connections"></svg>
+        <div class="magic-sparkles" id="magic-sparkles"></div>
+        <div class="magic-cursor-glow" id="magic-cursor-glow"></div>
+    </div>
+
     <header>
         <div class="container">
             <a href="/" class="logo">Hatch</a>
@@ -116,5 +133,9 @@ docker compose up</code></pre>
             <p>&copy; 2026 El Foundation. <a href="https://github.com/elfoundation/hatch">Hatch</a> is released under the <a href="https://github.com/elfoundation/hatch/blob/main/LICENSE">MIT License</a>.</p>
         </div>
     </footer>
+
+    <!-- Anime.js v4 (UMD) -->
+    <script src="https://cdn.jsdelivr.net/npm/animejs@4/dist/bundles/anime.umd.min.js"></script>
+    <script src="/main.js" defer></script>
 </body>
 </html>
