@@ -1,0 +1,189 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}/${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            goos: linux
+            goarch: amd64
+          - os: linux
+            arch: arm64
+            goos: linux
+            goarch: arm64
+          - os: darwin
+            arch: amd64
+            goos: darwin
+            goarch: amd64
+          - os: darwin
+            arch: arm64
+            goos: darwin
+            goarch: arm64
+          - os: windows
+            arch: amd64
+            goos: windows
+            goarch: amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          EXT=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            EXT=".exe"
+          fi
+          
+          BINARY_NAME="hatch-${{ matrix.os }}-${{ matrix.arch }}${EXT}"
+          
+          go build \
+            -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }}" \
+            -o "${BINARY_NAME}" \
+            ./cmd/hatch
+          
+          echo "BINARY_NAME=${BINARY_NAME}" >> $GITHUB_ENV
+
+      - name: Generate checksum
+        run: |
+          sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            ${{ env.BINARY_NAME }}
+            ${{ env.BINARY_NAME }}.sha256
+          retention-days: 1
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: |
+          ls -la artifacts/
+          echo "---"
+          for f in artifacts/*; do
+            echo "$f: $(du -h "$f" | cut -f1)"
+          done
+
+      - name: Create release notes
+        id: notes
+        run: |
+          # Extract changelog for this version if exists
+          VERSION="${{ steps.version.outputs.version }}"
+          NOTES=""
+          
+          if [ -f CHANGELOG.md ]; then
+            # Extract notes for this version
+            NOTES=$(awk "/^## ${VERSION}/,/^## [0-9]/" CHANGELOG.md | head -n -1)
+          fi
+          
+          if [ -z "$NOTES" ]; then
+            NOTES="## Changes in ${VERSION}
+
+            - Standalone binary releases for Linux, macOS, and Windows
+            - Updated CLI documentation
+            - See [CLI Reference](https://github.com/elfoundation/hatch/blob/main/docs/engineering/cli.md) for usage"
+          fi
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Hatch ${{ steps.version.outputs.version }}"
+          body: ${{ steps.notes.outputs.notes }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: |
+            artifacts/*
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate SBOM
+        run: |
+          # Create a simple SBOM with version info
+          cat > sbom.json << EOF
+          {
+            "name": "hatch",
+            "version": "${{ steps.version.outputs.version }}",
+            "buildDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "goVersion": "$(go version | awk '{print $3}')",
+            "platforms": [
+              "linux/amd64",
+              "linux/arm64",
+              "darwin/amd64",
+              "darwin/arm64",
+              "windows/amd64"
+            ]
+          }
+          EOF
+          
+          # Upload SBOM as release asset
+          gh release upload "${{ steps.version.outputs.version }}" sbom.json --clobber || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

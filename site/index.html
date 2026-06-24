@@ -5,83 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hatch — Self-hostable HTTP request inspector + mocker</title>
     <meta name="description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
-    
+
     <!-- Open Graph -->
     <meta property="og:title" content="Hatch — Self-hostable HTTP request inspector + mocker">
     <meta property="og:description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
     <meta property="og:image" content="/brand/og/default.png">
     <meta property="og:url" content="https://hatch.sh">
     <meta property="og:type" content="website">
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Hatch — Self-hostable HTTP request inspector + mocker">
     <meta name="twitter:description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
     <meta name="twitter:image" content="/brand/og/default.png">
-    
+
     <link rel="canonical" href="https://hatch.sh">
-    <link rel="icon" type="image/png" href="/brand/favicon/favicon.png">
+    <link rel="icon" type="image/png" href="/brand/favicon/favicon-48.png">
+
+    <!-- Fonts: Inter for body, JetBrains Mono for code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+    <!-- Three.js canvas for animated particle background -->
+    <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
     <header>
         <div class="container">
-            <a href="/" class="logo">Hatch</a>
+            <a href="/" class="logo">
+                <span class="logo-mark">⬡</span> Hatch
+            </a>
             <nav>
-                <a href="https://github.com/elfoundation/hatch">GitHub</a>
-                <a href="/blog/">Blog</a>
+                <a href="https://github.com/elfoundation/hatch" class="nav-link">GitHub</a>
+                <a href="/blog/" class="nav-link">Blog</a>
             </nav>
         </div>
     </header>
-    
+
     <main>
+        <!-- Hero -->
         <section class="hero">
             <div class="container">
-                <h1>Self-hostable HTTP request inspector + mocker</h1>
-                <p>One Go binary. SQLite under the hood. <code>docker compose up</code>, and you have an inspection endpoint and a live feed in under 30 seconds. Your payloads never leave your box.</p>
-                <div class="cta">
-                    <a href="https://github.com/elfoundation/hatch" class="btn btn-primary">View on GitHub</a>
-                    <a href="https://github.com/elfoundation/hatch#quick-start" class="btn btn-secondary">Quick Start</a>
+                <div class="hero-badge" data-animate="fade-up">Open source &middot; MIT licensed</div>
+                <h1 data-animate="fade-up" data-delay="80">
+                    Self-hostable HTTP request<br>inspector&nbsp;+&nbsp;mocker
+                </h1>
+                <p class="hero-sub" data-animate="fade-up" data-delay="160">
+                    One Go binary. SQLite under the hood.<br>
+                    <code>docker compose up</code>, and you have an inspection endpoint and a live feed in under 30 seconds.
+                </p>
+                <div class="hero-cta" data-animate="fade-up" data-delay="240">
+                    <a href="https://github.com/elfoundation/hatch" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                        View on GitHub
+                    </a>
+                    <a href="https://github.com/elfoundation/hatch#quick-start" class="btn btn-secondary">
+                        Quick Start →
+                    </a>
+                </div>
+                <div class="hero-terminal" data-animate="fade-up" data-delay="320">
+                    <div class="terminal-bar">
+                        <span class="terminal-dot"></span>
+                        <span class="terminal-dot"></span>
+                        <span class="terminal-dot"></span>
+                        <span class="terminal-title">terminal</span>
+                    </div>
+                    <pre><code><span class="t-prompt">$</span> <span class="t-cmd">docker compose up -d</span>
+<span class="t-output">✓ hatch  started on :8080</span>
+<span class="t-prompt">$</span> <span class="t-cmd">curl -X POST https://your-bin.hatch.surf/test -d '{"hello":"world"}'</span>
+<span class="t-output">✓ captured — view at https://your-bin.hatch.surf/inspect</span></code></pre>
                 </div>
             </div>
         </section>
-        
+
+        <!-- Features -->
         <section class="features">
             <div class="container">
-                <h2>Three things, and nothing else</h2>
+                <h2 data-animate="fade-up">Three things, and nothing else</h2>
                 <div class="feature-grid">
-                    <div class="feature">
+                    <div class="feature" data-animate="fade-up" data-delay="80">
+                        <div class="feature-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
                         <h3>Capture</h3>
                         <p>Method, path, headers, query, body. Persists across restarts because the storage is SQLite on disk, not a hosted queue.</p>
                     </div>
-                    <div class="feature">
+                    <div class="feature" data-animate="fade-up" data-delay="160">
+                        <div class="feature-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </div>
                         <h3>Inspect</h3>
                         <p>A live SSE feed of incoming requests. Click any captured request to see the headers, the body, the timing.</p>
                     </div>
-                    <div class="feature">
+                    <div class="feature" data-animate="fade-up" data-delay="240">
+                        <div class="feature-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        </div>
                         <h3>Mock</h3>
                         <p>Return a 200, a 500, or a custom JSON payload. For testing your own retry, backoff, and error-handling logic.</p>
                     </div>
                 </div>
             </div>
         </section>
-        
+
+        <!-- Why -->
         <section class="why">
             <div class="container">
-                <h2>Why a single binary, not a SaaS</h2>
-                <ul>
-                    <li><strong>Compliance and privacy.</strong> Some teams cannot legally send webhook payloads to a hosted SaaS. Hatch keeps the data on your own network.</li>
-                    <li><strong>Cost.</strong> A hosted inspector charges per request, per seat, or per retention day. Hatch is one Go binary on a $5 VPS. There is no per-request fee because there is no one to charge it.</li>
-                    <li><strong>Speed of setup.</strong> <code>docker compose up</code> is faster than signing up for a SaaS, verifying your email, configuring your first bin, and pasting the URL into your webhook config.</li>
-                </ul>
+                <h2 data-animate="fade-up">Why a single binary, not a SaaS</h2>
+                <div class="why-grid">
+                    <div class="why-item" data-animate="fade-up" data-delay="80">
+                        <div class="why-number">01</div>
+                        <div class="why-content">
+                            <h3>Compliance and privacy</h3>
+                            <p>Some teams cannot legally send webhook payloads to a hosted SaaS. Hatch keeps the data on your own network.</p>
+                        </div>
+                    </div>
+                    <div class="why-item" data-animate="fade-up" data-delay="160">
+                        <div class="why-number">02</div>
+                        <div class="why-content">
+                            <h3>Cost</h3>
+                            <p>A hosted inspector charges per request, per seat, or per retention day. Hatch is one Go binary on a $5 VPS. There is no per-request fee because there is no one to charge it.</p>
+                        </div>
+                    </div>
+                    <div class="why-item" data-animate="fade-up" data-delay="240">
+                        <div class="why-number">03</div>
+                        <div class="why-content">
+                            <h3>Speed of setup</h3>
+                            <p><code>docker compose up</code> is faster than signing up for a SaaS, verifying your email, configuring your first bin, and pasting the URL into your webhook config.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="final-cta" data-animate="fade-up">
+            <div class="container">
+                <h2>Start inspecting in 30&nbsp;seconds</h2>
+                <p>One binary. Your data stays yours.</p>
+                <a href="https://github.com/elfoundation/hatch" class="btn btn-primary btn-lg">
+                    Get Hatch →
+                </a>
             </div>
         </section>
     </main>
-    
+
     <footer>
         <div class="container">
-            <p>&copy; 2026 El Foundation. <a href="https://github.com/elfoundation/hatch">Hatch</a> is released under the <a href="https://github.com/elfoundation/hatch/blob/main/LICENSE">MIT License</a>.</p>
+            <div class="footer-inner">
+                <span class="footer-logo">⬡ Hatch</span>
+                <p>&copy; 2026 El Foundation. <a href="https://github.com/elfoundation/hatch">Hatch</a> is released under the <a href="https://github.com/elfoundation/hatch/blob/main/LICENSE">MIT License</a>.</p>
+            </div>
         </div>
     </footer>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+    <script src="/main.js"></script>
 </body>
 </html>

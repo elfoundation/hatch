@@ -139,4 +139,8 @@ func (r *sqliteRepo) SearchRequests(ctx context.Context, endpointID string, quer
 
 func (r *sqliteRepo) Close() error { return r.db.Close() }
 
+func (r *sqliteRepo) Ping(ctx context.Context) error {
+	return r.db.PingContext(ctx)
+}
+
 func utcNow() string { return time.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00") }
