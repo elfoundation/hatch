@@ -17,8 +17,7 @@ FROM nginx:alpine AS production
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built assets from builder
-COPY --from=builder /app/.next/static /usr/share/nginx/html/_next/static
+# Copy static export (everything is in /app/out)
 COPY --from=builder /app/out /usr/share/nginx/html
 
 # Expose port (internal only, no SSL)
