@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/http/pprof"
 	"strings"
 
 	"github.com/elfoundation/hatch/internal/store"
@@ -13,7 +14,8 @@ import (
 
 // Handler groups all HTTP handlers and their shared dependencies.
 type Handler struct {
-	Repo store.Repository
+	Repo  store.Repository
+	Debug bool
 }
 
 // New creates a new Handler with the given store.
@@ -28,6 +30,18 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 	// Health check.
 	r.Get("/healthz", Healthz)
+	r.Get("/readyz", h.Readyz)
+
+	// Debug endpoints (only when enabled).
+	if h.Debug {
+		r.Route("/debug/pprof", func(r chi.Router) {
+			r.HandleFunc("/", pprof.Index)
+			r.HandleFunc("/cmdline", pprof.Cmdline)
+			r.HandleFunc("/profile", pprof.Profile)
+			r.HandleFunc("/symbol", pprof.Symbol)
+			r.HandleFunc("/trace", pprof.Trace)
+		})
+	}
 
 	// JSON API v1 routes.
 	h.RegisterV1Routes(r)
@@ -115,6 +129,20 @@ func (h *Handler) capture(w http.ResponseWriter, r *http.Request) {
 
 // Healthz returns 200 OK for liveness probes.
 func Healthz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ok\n"))
+}
+
+// Readyz returns 200 OK if the service is ready to handle requests.
+// It checks database connectivity.
+func (h *Handler) Readyz(w http.ResponseWriter, r *http.Request) {
+	if err := h.Repo.Ping(r.Context()); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{"error": "database not ready"})
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok\n"))

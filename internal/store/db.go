@@ -24,7 +24,13 @@ func Open(dbPath string) (Repository, error) {
 	if err != nil {
 		return nil, fmt.Errorf("store: open %s: %w", dbPath, err)
 	}
+	// SQLite supports only one writer at a time. Using MaxOpenConns(1)
+	// prevents "database is locked" errors under concurrent writes.
+	// For read-heavy workloads with WAL mode, this can be increased,
+	// but the single-writer constraint remains.
 	conn.SetMaxOpenConns(1)
+	conn.SetMaxIdleConns(1)
+	conn.SetConnMaxLifetime(0) // No limit; SQLite connections are lightweight.
 	if err := migrate(conn); err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("store: migrate: %w", err)
