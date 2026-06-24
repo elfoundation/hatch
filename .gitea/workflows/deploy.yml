@@ -1,4 +1,4 @@
-name: Build and Deploy hatch.surf
+name: Build hatch.surf
 
 on:
   push:
@@ -16,18 +16,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build Docker image
         run: |
           docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
           docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.IMAGE_NAME }}:latest
           echo "Docker image built successfully"
           docker images | grep ${{ env.IMAGE_NAME }}
-
-      - name: Save Docker image
-        run: |
-          docker save ${{ env.IMAGE_NAME }}:latest | gzip > /tmp/${{ env.IMAGE_NAME }}.tar.gz
-          echo "Image saved to /tmp/${{ env.IMAGE_NAME }}.tar.gz"
-          ls -lh /tmp/${{ env.IMAGE_NAME }}.tar.gz
