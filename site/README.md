@@ -1,6 +1,6 @@
 # Hatch Static Site
 
-This directory contains the static site for [hatch.sh](https://hatch.sh).
+This directory contains the static site for [hatch.surf](https://hatch.surf).
 
 ## Structure
 
@@ -29,11 +29,11 @@ The site is automatically deployed to GitHub Pages via the `deploy-site.yml` wor
 1. Go to repository Settings → Pages
 2. Source: Deploy from a branch
 3. Branch: `main`, folder: `/site`
-4. Custom domain: `hatch.sh`
+4. Custom domain: `hatch.surf`
 
 ### DNS Configuration
 
-To point `hatch.sh` to GitHub Pages:
+To point `hatch.surf` to GitHub Pages:
 
 1. Add these DNS records:
    - Type: A, Name: @, Value: 185.199.108.153
