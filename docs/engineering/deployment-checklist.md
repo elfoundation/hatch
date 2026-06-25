@@ -20,33 +20,39 @@ git push origin main
 
 GitHub Actions will automatically:
 - Deploy to GitHub Pages
-- Deploy to hatch.surf server via rsync
+- Build Docker image and deploy to hatch.surf server
 
-### 2. Manual (When on Server)
+### 2. Manual (From Remote Machine)
 
 ```bash
-# Copy files
-sudo cp site/index.html /var/www/hatch.surf/index.html
-sudo cp site/style.css /var/www/hatch.surf/style.css
-sudo cp site/main.js /var/www/hatch.surf/main.js
+# Dry run first
+./scripts/deploy-site.sh --dry-run
 
-# Set permissions
-sudo chown www-data:www-data /var/www/hatch.surf/{index,style,main}.{html,css,js}
-
-# Verify
-curl -s -I https://hatch.surf
+# Deploy
+./scripts/deploy-site.sh
 ```
 
-### 3. Via SSH (From Remote Machine)
+### 3. Docker Commands (On Server)
 
 ```bash
-./scripts/deploy-site.sh
+# Build image
+docker build -t hatch-homepage:latest ./site
+
+# Run container
+docker run -d \
+  --name hatch-homepage \
+  --restart unless-stopped \
+  -p 127.0.0.1:3000:80 \
+  hatch-homepage:latest
+
+# Check status
+docker ps | grep hatch-homepage
 ```
 
 ## Post-Deployment Verification
 
 - [ ] https://hatch.surf loads (HTTP 200)
-- [ ] Three.js particle animation renders (canvas element present)
+- [ ] Anime.js magical background renders
 - [ ] Scroll animations work (data-animate attributes)
 - [ ] All static assets load:
   - [ ] style.css
@@ -58,34 +64,33 @@ curl -s -I https://hatch.surf
 
 ## Troubleshooting
 
-### Site Not Loading
+### Container Not Running
 ```bash
-# Check nginx status
-sudo systemctl status nginx
+# Check container status
+docker ps -a | grep hatch-homepage
 
-# Check nginx config
-sudo nginx -t
+# View logs
+docker logs hatch-homepage
 
-# Reload nginx
-sudo systemctl reload nginx
+# Restart container
+docker restart hatch-homepage
 ```
 
 ### Assets Not Loading
 ```bash
-# Check file permissions
-ls -la /var/www/hatch.surf/
+# Check files in container
+docker exec hatch-homepage ls -la /usr/share/nginx/html/
 
-# Fix permissions
-sudo chown -R www-data:www-data /var/www/hatch.surf/
+# Rebuild image
+docker build -t hatch-homepage:latest ./site
+docker restart hatch-homepage
 ```
 
 ### SSL Issues
+Caddy handles TLS automatically. Check Caddy status:
 ```bash
-# Check certificate
-sudo certbot certificates
-
-# Renew if needed
-sudo certbot renew --cert-name hatch.surf
+docker ps | grep caddy
+docker logs caddy
 ```
 
 ## Related Documentation
