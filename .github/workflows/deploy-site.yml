@@ -1,0 +1,93 @@
+name: Deploy static site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy-github-pages:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload the site directory
+          path: 'site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-docker:
+    name: Deploy via Docker to hatch.surf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t hatch-homepage:latest ./site
+
+      - name: Save Docker image
+        run: docker save hatch-homepage:latest | gzip > hatch-homepage.tar.gz
+
+      - name: Deploy to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: "hatch-homepage.tar.gz"
+          target: "/tmp/hatch-homepage.tar.gz"
+
+      - name: Load and restart container
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            # Load the image
+            docker load < /tmp/hatch-homepage.tar.gz
+            
+            # Stop and remove old container if exists
+            docker stop hatch-homepage 2>/dev/null || true
+            docker rm hatch-homepage 2>/dev/null || true
+            
+            # Run new container (static files baked into image, no host mount)
+            docker run -d \
+              --name hatch-homepage \
+              --restart unless-stopped \
+              -p 127.0.0.1:3000:80 \
+              hatch-homepage:latest
+            
+            # Clean up
+            rm -f /tmp/hatch-homepage.tar.gz
+            
+            # Reload nginx if it's managing the reverse proxy
+            nginx -t && systemctl reload nginx 2>/dev/null || true

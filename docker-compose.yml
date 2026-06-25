@@ -1,21 +1,33 @@
 services:
-  hatch-web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hatch-web
+  hatch:
+    build: .
     restart: unless-stopped
     ports:
-      - "8080:80"
-    networks:
-      - hatch-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - hatch-data:/data
+    environment:
+      - HATCH_PORT=8080
+      - HATCH_DB_PATH=/data/hatch.db
+      - HATCH_BASE_URL=${HATCH_BASE_URL:-http://localhost}
 
-networks:
-  hatch-network:
-    driver: bridge
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      - HATCH_HOSTNAME=${HATCH_HOSTNAME:-localhost}
+    # Caddy runs even without a real hostname (self-signed)
+    profiles:
+      - with-caddy
+
+volumes:
+  hatch-data:
+  caddy-data:
+  caddy-config:

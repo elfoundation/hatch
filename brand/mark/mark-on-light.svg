@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" role="img" aria-label="Hatch mark">
+  <rect width="1000" height="1000" fill="#FAFAF9"/>
+  <g>
+    <!-- Rounded square body -->
+    <rect x="100" y="100" width="800" height="800" rx="192" ry="192"
+          fill="none" stroke="#0A0A0B" stroke-width="88" stroke-linejoin="round"/>
+    <!-- The slot: a horizontal bar -->
+    <line x1="276" y1="460" x2="596" y2="460"
+          stroke="#0A0A0B" stroke-width="61.599999999999994" stroke-linecap="round"/>
+    <!-- The request: a small filled square above the slot -->
+    <rect x="436" y="244" width="128" height="128" fill="#0A0A0B"/>
+    <!-- The stem connecting the request to the slot -->
+    <line x1="500" y1="372" x2="500" y2="460"
+          stroke="#0A0A0B" stroke-width="46.199999999999996" stroke-linecap="round"/>
+  </g>
+</svg>

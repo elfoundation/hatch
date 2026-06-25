@@ -1,15 +1,24 @@
-# Production - Static landing page
-FROM nginx:alpine AS production
+# syntax=docker/dockerfile:1
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# ---- build stage ----
+FROM golang:1.25-alpine AS build
 
-# Copy static files from build context
-COPY out/ /usr/share/nginx/html
+WORKDIR /src
 
-# Expose port (internal only, no SSL)
-EXPOSE 80
+# Cache module downloads before copying source (layer caching).
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget -qO- http://localhost:80/ || exit 1
+COPY . ./
+
+# Build a fully static binary (CGO disabled, no libc dependency).
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/hatch ./cmd/hatch
+
+# ---- run stage ----
+FROM scratch
+
+COPY --from=build /bin/hatch /bin/hatch
+
+EXPOSE 8080
+
+ENTRYPOINT ["/bin/hatch"]

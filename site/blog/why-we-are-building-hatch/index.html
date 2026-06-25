@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why we are building Hatch — Hatch Blog</title>
+    <meta name="description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Why we are building Hatch">
+    <meta property="og:description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
+    <meta property="og:image" content="https://hatch.surf/brand/og/default.png">
+    <meta property="og:url" content="https://hatch.surf/blog/why-we-are-building-hatch">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="2026-06-23">
+    <meta property="article:author" content="El Foundation">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Why we are building Hatch">
+    <meta name="twitter:description" content="Hatch is a self-hostable HTTP request inspector and mocker. One Go binary, SQLite, no SaaS, no per-request fee. Open source, MIT.">
+    <meta name="twitter:image" content="https://hatch.surf/brand/og/default.png">
+    
+    <link rel="canonical" href="https://hatch.surf/blog/why-we-are-building-hatch">
+    <link rel="icon" type="image/png" href="/brand/favicon/favicon.png">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <!-- Anime.js magical background layers -->
+    <div id="magic-bg" aria-hidden="true">
+        <div class="magic-aurora"></div>
+        <div class="magic-aurora magic-aurora--2"></div>
+        <div class="magic-aurora magic-aurora--3"></div>
+        <svg class="magic-runes" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+            <circle class="rune rune-outer" cx="400" cy="400" r="350" />
+            <circle class="rune rune-mid" cx="400" cy="400" r="260" />
+            <circle class="rune rune-inner" cx="400" cy="400" r="170" />
+            <circle class="rune rune-core" cx="400" cy="400" r="80" />
+        </svg>
+        <div class="magic-orbs" id="magic-orbs"></div>
+        <svg class="magic-connections" id="magic-connections"></svg>
+        <div class="magic-sparkles" id="magic-sparkles"></div>
+        <div class="magic-cursor-glow" id="magic-cursor-glow"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <a href="/" class="logo">Hatch</a>
+            <nav>
+                <a href="https://github.com/elfoundation/hatch">GitHub</a>
+                <a href="/blog/">Blog</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main>
+        <article class="blog-post">
+            <div class="container">
+                <header class="post-header">
+                    <h1>Why we are building Hatch</h1>
+                    <time datetime="2026-06-23">June 23, 2026</time>
+                </header>
+                
+                <div class="post-content">
+                    <p>Every team that integrates with a third-party API ends up needing a webhook inspector. The hosted tools — webhook.site, RequestBin (now Pipedream), Beeceptor, Hookdeck — work fine. They also send your payloads to someone else's server, which is a non-starter for the compliance-, privacy-, and "we'd rather not" set.</p>
+                    
+                    <p>We are building Hatch for the set.</p>
+                    
+                    <p>If you're looking for a <a href="https://github.com/elfoundation/hatch">requestbin alternative</a> that keeps your data on your own network, Hatch is the answer.</p>
+                    
+                    <p>Hatch is a self-hostable HTTP request inspector and mocker. One Go binary. SQLite under the hood. <code>docker compose up</code>, and you have an inspection endpoint and a live feed in under 30 seconds. Your payloads never leave your box.</p>
+                    
+                    <h2>Who this is for</h2>
+                    
+                    <p>You are a backend or platform engineer. You integrate with one or more third-party APIs that send you webhooks. You have tried webhook.site or RequestBin; they are fine for an afternoon. You want the same UX, but you want the data on your own infrastructure, on your own laptop, on a $5 VPS, or in your CI. You do not want a hosted dashboard logging every payload to someone else's database. Hatch is for that job.</p>
+                    
+                    <h2>What it does</h2>
+                    
+                    <p>Three things, and nothing else:</p>
+                    
+                    <ul>
+                        <li><strong>Capture.</strong> Method, path, headers, query, body. Persists across restarts because the storage is SQLite on disk, not a hosted queue.</li>
+                        <li><strong>Inspect.</strong> A live SSE feed of incoming requests. Click any captured request to see the headers, the body, the timing.</li>
+                        <li><strong>Mock.</strong> Return a 200, a 500, or a custom JSON payload. For testing your own retry, backoff, and error-handling logic without spinning up a separate mock server.</li>
+                    </ul>
+                    
+                    <p>That is the whole v0.1.</p>
+                    
+                    <h2>What it does not do</h2>
+                    
+                    <ul>
+                        <li>No auth, no teams, no SSO.</li>
+                        <li>No search-across-history.</li>
+                        <li>No multi-tenant cloud, no billing, no per-request fee.</li>
+                        <li>No production webhook reliability primitives (retries, ordering, dedup). That is Hookdeck's lane.</li>
+                        <li>No TCP/UDP tunneling. That is ngrok's lane.</li>
+                    </ul>
+                    
+                    <p>Saying no is a feature. Every feature in v0.1 has to be something we can keep simple. A request inspector and a mocker are simple. Auth, teams, search, and cloud are not. So they are not in v0.1.</p>
+                    
+                    <h2>Why a single binary, not a SaaS</h2>
+                    
+                    <p>Three reasons, in order of importance:</p>
+                    
+                    <ol>
+                        <li><strong>Compliance and privacy.</strong> Some teams cannot legally send webhook payloads to a hosted SaaS. The current options for them are "build your own" (a week the first time, a day every time after) or "use a SaaS and accept the risk." Hatch is the third option — a self-hostable <a href="https://github.com/elfoundation/hatch">requestbin alternative</a> that keeps the data on your own network.</li>
+                        <li><strong>Cost.</strong> A hosted inspector charges per request, per seat, or per retention day. Hatch is one Go binary on a $5 VPS. There is no per-request fee because there is no one to charge it. There is no free-tier cliff because there is no free tier.</li>
+                        <li><strong>Speed of setup.</strong> <code>docker compose up</code> is faster than signing up for a SaaS, verifying your email, configuring your first bin, and pasting the URL into your webhook config. We have done the local-setup dance enough times to know.</li>
+                    </ol>
+                    
+                    <h2>What is open and what is not</h2>
+                    
+                    <p>The code is <a href="https://github.com/elfoundation/hatch">open source</a>. The license is MIT. The repo lives at <a href="https://github.com/elfoundation/hatch">github.com/elfoundation/hatch</a>. The README is the spec; the quickstart is one command; the issues tab is the roadmap.</p>
+                    
+                    <p>We do not have a hosted cloud offering. We do not have a paid tier. We do not have a roadmap with a public date for either. When we do, the self-hosted build will keep working the same way it does today. We will not silently take a feature away from the OSS build to push it into a paid tier; that is a written promise, and the diff is the proof.</p>
+                    
+                    <h2>How to try it</h2>
+                    
+                    <pre><code>git clone https://github.com/elfoundation/hatch
+cd hatch
+docker compose up</code></pre>
+                    
+                    <p>The README has the full quickstart, the API reference, and the limits of v0.1. If you find a bug, open an issue. If you want a feature that is not on the v0.1 list, open an issue anyway — we read every one, and "we do not do X yet" is a real answer.</p>
+                    
+                    <p>Star the repo: <a href="https://github.com/elfoundation/hatch">github.com/elfoundation/hatch</a>.</p>
+                </div>
+            </div>
+        </article>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 El Foundation. <a href="https://github.com/elfoundation/hatch">Hatch</a> is released under the <a href="https://github.com/elfoundation/hatch/blob/main/LICENSE">MIT License</a>.</p>
+        </div>
+    </footer>
+
+    <!-- Anime.js v4 (UMD) -->
+    <script src="https://cdn.jsdelivr.net/npm/animejs@4/dist/bundles/anime.umd.min.js"></script>
+    <script src="/main.js" defer></script>
+</body>
+</html>

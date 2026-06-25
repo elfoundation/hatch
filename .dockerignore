@@ -1,7 +1,37 @@
-node_modules
-.next
+# Git
 .git
-*.md
-.env*
-.vscode
-.idea
+.gitignore
+.gitattributes
+
+# Docs (not needed at runtime)
+docs/
+
+# Editor config
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Docker (avoid recursive copy)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Node artifacts (from pre-migration scaffold, will be removed by ELF-15)
+node_modules/
+pnpm-lock.yaml
+package.json
+apps/
+
+# Test / build caches
+*.test
+coverage/

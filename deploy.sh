@@ -6,14 +6,19 @@ set -e
 echo "=== Deploying hatch.surf ==="
 cd /home/nara/apps/web
 
-# Pull latest changes
-git pull origin main
+# Pull latest changes from GitHub (primary source)
+git pull github main
 
-# Build and deploy
+# Push to Gitea (push-mirror)
+git push origin main
+
+# Build and deploy from site directory
+cd site
 docker build -t hatch-web:latest .
 docker stop hatch-web 2>/dev/null || true
 docker rm hatch-web 2>/dev/null || true
-docker compose up -d
+docker run -d --name hatch-web --restart unless-stopped -p 8080:80 hatch-web:latest
+cd ..
 
 # Verify
 sleep 5
