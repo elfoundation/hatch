@@ -38,6 +38,8 @@ Rename-Item hatch-windows-amd64.exe hatch.exe
 # Move to a directory in your PATH
 ```
 
+For details on the release process and how to create new releases, see [Release Process](docs/engineering/release-process.md).
+
 ### Build from Source
 
 Requires Go 1.25 or later:
