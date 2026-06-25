@@ -27,7 +27,10 @@
 - [ ] Run `go test ./...` — should pass on a fresh clone
 - [ ] Run `go run ./cmd/hatch` and `curl http://localhost:8080/healthz` — should return `ok`
 - [ ] Run `docker compose up --build` and visit `http://localhost:8080/healthz` — should return `ok`
+- [ ] Read [PR Submission Guidelines](pr-submission-guidelines.md), [Approval Workflow](approval-workflow.md), and [PR Merging Rule FAQ](pr-merging-rule-faq.md)
 - [ ] Open your first PR (a README typo fix or doc improvement counts)
+
+**Important:** Only the CEO or CTO can merge pull requests. You cannot merge your own PR.
 
 ## Week 1: First Task
 

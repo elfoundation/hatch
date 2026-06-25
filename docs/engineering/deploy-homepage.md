@@ -7,7 +7,7 @@ This document describes how the Hatch static homepage is deployed to hatch.surf.
 The homepage is deployed to two locations:
 
 1. **GitHub Pages** - Serves as a fallback and for GitHub-based discovery
-2. **hatch.surf server** - Primary deployment at https://hatch.surf
+2. **hatch.surf server** - Primary deployment via Docker at https://hatch.surf
 
 ## Architecture
 
@@ -15,39 +15,40 @@ The homepage is deployed to two locations:
 site/
 ├── index.html          # Main homepage
 ├── style.css           # Stylesheet
+├── main.js             # JavaScript
 ├── brand/              # Logo and favicon assets
 │   ├── favicon/
 │   └── og/
-└── blog/               # Blog directory (placeholder)
+├── blog/               # Blog directory
+├── Dockerfile          # nginx:alpine with static files baked in
+└── docker-compose.yml  # Local development
 ```
+
+### Docker Deployment Flow
+
+```
+GitHub Push → GitHub Actions → Docker Build → SCP Image → Docker Run → Caddy (reverse proxy)
+```
+
+- Static files are **baked into the Docker image** during build
+- No host directory mounting (`/var/www`) required
+- Image is self-contained and portable
 
 ## Server Setup
 
 ### Prerequisites
 
 - Server: 46.250.250.48 (hatch.surf)
-- nginx installed and configured
-- Let's Encrypt certificate for hatch.surf
+- Docker installed
+- Caddy for reverse proxy and TLS
 - SSH access for deployment
 
-### Nginx Configuration
+### Container Configuration
 
-The nginx server block is located at:
-- `/etc/nginx/sites-available/hatch.surf.conf`
-- Symlinked to `/etc/nginx/sites-enabled/hatch.surf.conf`
-
-Configuration highlights:
-- HTTP → HTTPS redirect
-- SSL with Let's Encrypt certificate
-- Security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy)
-- Gzip compression
-- Static asset caching (30 days)
-
-### SSL Certificate
-
-- Certificate managed by Let's Encrypt
-- Auto-renewal via certbot
-- Expiry: September 22, 2026
+- **Container name**: `hatch-homepage`
+- **Image**: `hatch-homepage:latest`
+- **Internal port**: 80 (nginx)
+- **Exposed port**: 127.0.0.1:3000 (proxied by Caddy)
 
 ## Deployment
 
@@ -56,7 +57,7 @@ Configuration highlights:
 When changes are pushed to `main` branch affecting `site/` directory:
 
 1. **GitHub Pages** - Deployed automatically via GitHub Actions
-2. **Server** - Deployed via rsync to `/var/www/hatch.surf/`
+2. **Server** - Docker image built, uploaded, and deployed
 
 Required GitHub secrets:
 - `DEPLOY_HOST` - Server IP (46.250.250.48)
@@ -78,33 +79,28 @@ DEPLOY_KEY=$(cat ~/.ssh/id_rsa | base64) \
 ./scripts/deploy-site.sh
 ```
 
-### Direct rsync
+### Docker Commands (on server)
 
 ```bash
-rsync -avz --delete site/ root@46.250.250.48:/var/www/hatch.surf/
-ssh root@46.250.250.48 "nginx -t && systemctl reload nginx"
+# Build image locally
+docker build -t hatch-homepage:latest ./site
+
+# Run container
+docker run -d \
+  --name hatch-homepage \
+  --restart unless-stopped \
+  -p 127.0.0.1:3000:80 \
+  hatch-homepage:latest
+
+# Check status
+docker ps | grep hatch-homepage
+
+# View logs
+docker logs hatch-homepage
+
+# Restart
+docker restart hatch-homepage
 ```
-
-### Direct Deployment (When Running on Server)
-
-If you're running on the same server as hatch.surf (e.g., in a Paperclip agent environment), you can deploy directly without SSH:
-
-```bash
-# Copy files directly to the deployment directory
-sudo cp site/index.html /var/www/hatch.surf/index.html
-sudo cp site/style.css /var/www/hatch.surf/style.css
-sudo cp site/main.js /var/www/hatch.surf/main.js
-
-# Set correct ownership
-sudo chown www-data:www-data /var/www/hatch.surf/index.html
-sudo chown www-data:www-data /var/www/hatch.surf/style.css
-sudo chown www-data:www-data /var/www/hatch.surf/main.js
-
-# Verify deployment
-curl -s -I https://hatch.surf
-```
-
-**Note:** This method was used successfully in [ELF-196](/ELF/issues/ELF-196) when the agent had direct server access.
 
 ## Verification
 
@@ -134,31 +130,34 @@ curl -s -o /dev/null -w "%{http_code}" https://hatch.surf/brand/og/default.png
 
 ## Troubleshooting
 
-### SSL Certificate Issues
+### Container Issues
 
 ```bash
-# Check certificate status
-sudo certbot certificates
+# Check container status
+docker ps -a | grep hatch-homepage
 
-# Renew certificate manually
-sudo certbot renew --cert-name hatch.surf
+# View container logs
+docker logs hatch-homepage
 
-# Test nginx config
-sudo nginx -t
+# Enter container
+docker exec -it hatch-homepage sh
+
+# Check nginx config inside container
+docker exec hatch-homepage nginx -t
 ```
 
 ### Deployment Failures
 
 1. Check GitHub Actions logs
 2. Verify SSH access: `ssh root@46.250.250.48`
-3. Check nginx status: `sudo systemctl status nginx`
-4. Check nginx logs: `sudo tail -f /var/log/nginx/error.log`
+3. Check Docker status: `docker ps`
+4. Check Caddy logs: `docker logs caddy`
 
 ### Missing Assets
 
-1. Verify files exist on server: `ls -la /var/www/hatch.surf/brand/`
-2. Check nginx access logs: `sudo tail -f /var/log/nginx/access.log`
-3. Ensure proper file permissions: `chown -R www-data:www-data /var/www/hatch.surf`
+1. Verify image contains files: `docker exec hatch-homepage ls -la /usr/share/nginx/html/`
+2. Check nginx access logs: `docker logs hatch-homepage`
+3. Ensure image is up to date: `docker pull hatch-homepage:latest`
 
 ## Maintenance
 
@@ -170,23 +169,23 @@ sudo nginx -t
 
 ### SSL Renewal
 
-Certbot is configured to auto-renew. To check renewal status:
-
-```bash
-sudo certbot renew --dry-run
-```
+Caddy handles TLS automatically via Let's Encrypt. No manual renewal needed.
 
 ### Backup
 
-The site is version-controlled in Git. For server backups:
+The site is version-controlled in Git. Docker images are stored on the server.
 
 ```bash
-# Backup nginx config
-sudo tar -czf nginx-hatch-backup.tar.gz /etc/nginx/sites-available/hatch.surf.conf /etc/letsencrypt/live/hatch.surf/
+# Backup Docker image
+docker save hatch-homepage:latest | gzip > hatch-homepage-backup.tar.gz
+
+# Restore
+docker load < hatch-homepage-backup.tar.gz
 ```
 
 ## Related Issues
 
+- [ELF-248](/ELF/issues/ELF-248) - Properly Dockerize hatch.surf homepage deployment
 - [ELF-192](/ELF/issues/ELF-192) - Build homepage and deploy it on hatch.surf
 - [ELF-171](/ELF/issues/ELF-171) - Server setup (nginx, SSL)
 - [ELF-196](/ELF/issues/ELF-196) - Deploy redesigned hatch.surf homepage (v2 files from ELF-195)
