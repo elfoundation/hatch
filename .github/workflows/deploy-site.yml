@@ -79,12 +79,11 @@ jobs:
             docker stop hatch-homepage 2>/dev/null || true
             docker rm hatch-homepage 2>/dev/null || true
             
-            # Run new container
+            # Run new container (static files baked into image, no host mount)
             docker run -d \
               --name hatch-homepage \
               --restart unless-stopped \
               -p 127.0.0.1:3000:80 \
-              -v /var/www/hatch.surf:/usr/share/nginx/html:ro \
               hatch-homepage:latest
             
             # Clean up

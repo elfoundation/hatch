@@ -22,46 +22,39 @@ site/
 
 ## Deployment
 
-The site is automatically deployed to GitHub Pages via the `deploy-site.yml` workflow when changes are pushed to the `main` branch.
+The site is deployed via Docker to the hatch.surf server. Static files are baked into the Docker image — no host directory mounting required.
 
-### GitHub Pages Setup
+### Docker Deployment
 
-1. Go to repository Settings → Pages
-2. Source: Deploy from a branch
-3. Branch: `main`, folder: `/site`
-4. Custom domain: `hatch.surf`
+The GitHub Actions workflow (`deploy-site.yml`) automatically:
+1. Builds a Docker image with static files baked in
+2. Pushes the image to the server
+3. Restarts the container
+
+### Manual Deployment
+
+```bash
+# From repo root
+./scripts/deploy-site.sh
+
+# Dry run
+./scripts/deploy-site.sh --dry-run
+```
 
 ### DNS Configuration
 
-To point `hatch.surf` to GitHub Pages:
+To point `hatch.surf` to your server:
 
-1. Add these DNS records:
-   - Type: A, Name: @, Value: 185.199.108.153
-   - Type: A, Name: @, Value: 185.199.109.153
-   - Type: A, Name: @, Value: 185.199.110.153
-   - Type: A, Name: @, Value: 185.199.111.153
-   - Type: AAAA, Name: @, Value: 2606:50c0:8000::153
-   - Type: AAAA, Name: @, Value: 2606:50c0:8001::153
-   - Type: AAAA, Name: @, Value: 2606:50c0:8002::153
-   - Type: AAAA, Name: @, Value: 2606:50c0:8003::153
+1. Add A record pointing to your server IP
+2. Enable HTTPS via Caddy or Let's Encrypt
 
-2. Enable HTTPS in GitHub Pages settings
+### Architecture
 
-### 301 Redirect from GitHub README
-
-Add this to the README.md or as a GitHub Pages redirect:
-
-```html
-<!-- In site/index.html or a dedicated redirect page -->
-<meta http-equiv="refresh" content="0; url=/blog/why-we-are-building-hatch/">
-```
-
-Or use a JavaScript redirect for better SEO:
-
-```javascript
-// In a script tag or separate JS file
-window.location.replace('/blog/why-we-are-building-hatch/');
-```
+The deployment uses:
+- **Docker image**: nginx:alpine with static files baked in
+- **No host mounts**: Image is self-contained, no `/var/www` dependency
+- **Caddy**: Optional reverse proxy for TLS termination
+- **Port 3000**: Internal port, proxied by Caddy on 80/443
 
 ## Local Development
 

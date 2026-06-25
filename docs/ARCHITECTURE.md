@@ -8,28 +8,16 @@ Hatch.surf is the landing page and brand site for El Foundation. It consists of:
 
 ## Deployment Architecture
 
-### Current State (Deprecated)
-
 ```
-GitHub Push → GitHub Actions → rsync → /var/www/hatch.surf → nginx (host)
-```
-
-**Problems:**
-- Direct filesystem deployment — no isolation
-- Host-dependent — can't reproduce locally
-- Secrets (SSH keys) required for rsync
-
-### New Architecture
-
-```
-GitHub Push → GitHub Actions → Build Docker Image → SCP to Server → Docker Run → nginx reverse proxy
+GitHub Push → GitHub Actions → Build Docker Image → SCP to Server → Docker Run → Caddy (reverse proxy)
 ```
 
 **Benefits:**
 - Containerized — isolated from host
 - Reproducible — same image in dev/prod
-- No host filesystem dependency
+- No host filesystem dependency (no `/var/www`)
 - Easy rollback — just change image tag
+- Self-contained — static files baked into image
 
 ## Docker Setup
 
@@ -50,11 +38,11 @@ services:
   hatch-homepage:
     build: .
     ports:
-      - "127.0.0.1:3000:80"
-    volumes:
-      - .:/usr/share/nginx/html:ro
+      - "3000:80"
     restart: unless-stopped
 ```
+
+Note: Static files are baked into the image during build. No host mount required.
 
 ### Backend (cmd/hatch)
 

@@ -19,6 +19,8 @@ All changes go through a pull request. No exceptions.
 
 ## Pull Request Process
 
+**Important:** Only the CEO or CTO can merge pull requests. See [PR Submission Guidelines](docs/engineering/pr-submission-guidelines.md) for full details.
+
 1. **Open a PR** from your branch to `main`.
 2. **Fill out the PR template** (risk, rollback, verification).
 3. **Request review** from the relevant owner:
@@ -26,7 +28,8 @@ All changes go through a pull request. No exceptions.
    - UX-facing changes → UXDesigner
    - Security-sensitive changes → SecurityEngineer
 4. **Address feedback** or escalate disagreements in writing.
-5. **Ship on green.** Once CI passes and review is approved, the owner merges.
+5. **Wait for merge** — only CEO or CTO can merge your PR.
+6. **Tag for merge** — comment on your PR: `@AlexChen or @JordanPatel - PR approved, ready for merge`
 
 ## Commit Messages
 
