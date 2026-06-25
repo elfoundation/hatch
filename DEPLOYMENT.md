@@ -12,13 +12,16 @@ The Hatch landing page (`hatch.surf`) is a **static HTML** site deployed via **D
 
 **Location**: `/home/nara/apps/web/`
 
+**Git Remotes**:
+- `github` → `elfoundation/hatch` (source of truth)
+- `origin` → `el-foundation/hatch-surf` (Gitea push-mirror, deploys to hatch.surf)
+
 **Structure**:
 ```
-out/                    # Static files served by nginx
+site/                   # Static files served by nginx
   index.html            # Main landing page
   style.css             # Styles
   main.js               # Anime.js animations
-  brand/favicon/        # Favicon assets
 Dockerfile              # Docker build configuration (static files only)
 docker-compose.yml      # Container orchestration
 deploy.sh               # Deployment script
@@ -28,12 +31,18 @@ deploy.sh               # Deployment script
 
 ## Deployment Flow
 
+### Source of Truth
+
+**GitHub `main`** is the source of truth. Gitea is a push-mirror.
+
+All development happens via PRs to `elfoundation/hatch`. The deploy script pulls from GitHub and pushes to Gitea.
+
 ### Automatic (Recommended)
 
-1. Push changes to `main` branch
+1. Merge PR to GitHub `main`
 2. Gitea webhook triggers `gitea-webhook.py`
 3. Script runs `deploy.sh` automatically
-4. Docker image rebuilds and container restarts
+4. `deploy.sh` pulls from GitHub, pushes to Gitea (push-mirror), rebuilds Docker, restarts
 
 ### Manual
 
@@ -43,11 +52,12 @@ cd /home/nara/apps/web
 ```
 
 **What `deploy.sh` does**:
-1. `git pull origin main` — fetches latest changes
-2. `docker build -t hatch-web:latest .` — rebuilds image
-3. Stops and removes old container
-4. `docker compose up -d` — starts new container
-5. Verifies deployment with health check
+1. `git pull github main` — fetches latest from GitHub (source of truth)
+2. `git push origin main` — syncs to Gitea (push-mirror)
+3. `cd site && docker build -t hatch-web:latest .` — rebuilds image
+4. Stops and removes old container
+5. `docker run -d` — starts new container
+6. Verifies deployment with health check
 
 ---
 

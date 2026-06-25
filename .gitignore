@@ -28,3 +28,8 @@ coverage.out
 /hatch
 hatch.exe
 site/*.bak
+
+# Node
+node_modules/
+.next/
+out/
