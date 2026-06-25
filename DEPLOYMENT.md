@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Hatch landing page (`hatch.surf`) is a **Next.js** app deployed via **Docker** on the production server.
+The Hatch landing page (`hatch.surf`) is a **static HTML** site deployed via **Docker** on the production server.
 
 **Key principle**: All changes MUST go through the git repository and automated deployment. Never edit files directly on the server or use `/var/www`.
 
@@ -14,14 +14,14 @@ The Hatch landing page (`hatch.surf`) is a **Next.js** app deployed via **Docker
 
 **Structure**:
 ```
-/app/page.tsx          # Main page component
-/app/layout.tsx        # Root layout
-/app/globals.css       # Global styles
-/components/           # React components (Hero, Features, Why, CTA, Footer, Header)
-/public/               # Static assets
-Dockerfile             # Docker build configuration
-docker-compose.yml     # Container orchestration
-deploy.sh              # Deployment script
+out/                    # Static files served by nginx
+  index.html            # Main landing page
+  style.css             # Styles
+  main.js               # Anime.js animations
+  brand/favicon/        # Favicon assets
+Dockerfile              # Docker build configuration (static files only)
+docker-compose.yml      # Container orchestration
+deploy.sh               # Deployment script
 ```
 
 ---
@@ -55,7 +55,7 @@ cd /home/nara/apps/web
 
 **Container**: `hatch-web`  
 **Port**: `8080` (mapped to host)  
-**Internal**: nginx serving static Next.js export on port 80  
+**Internal**: nginx serving static files on port 80  
 **Network**: `hatch-network`
 
 **Check status**:
@@ -73,24 +73,26 @@ docker compose -f /home/nara/apps/web/docker-compose.yml restart
 
 ## Making Changes
 
-### 1. Edit the source code
+### 1. Edit the static files
 
 ```bash
 cd /home/nara/apps/web
 
-# Edit components
-vim components/Hero.tsx
-vim components/Features.tsx
-# etc.
+# Edit landing page
+vim out/index.html
 
 # Edit styles
-vim app/globals.css
+vim out/style.css
+
+# Edit animations
+vim out/main.js
 ```
 
 ### 2. Test locally (optional)
 
 ```bash
-npm run dev
+# Serve files locally
+cd out && python3 -m http.server 3000
 # Visit http://localhost:3000
 ```
 
@@ -122,13 +124,13 @@ curl -s http://localhost:8080 | head -20
 
 ❌ **DON'T**: Edit files in `/var/www/html/`  
 ❌ **DON'T**: Edit files directly inside the Docker container  
-❌ **DON'T**: Work on static HTML/CSS files in a workspace  
+❌ **DON'T**: Work on static HTML/CSS files in a workspace without committing  
 ❌ **DON'T**: Copy files to the server without using git  
 
-✅ **DO**: Edit files in `/home/nara/apps/web/`  
+✅ **DO**: Edit files in `/home/nara/apps/web/out/`  
 ✅ **DO**: Commit changes to git  
 ✅ **DO**: Use `deploy.sh` for deployment  
-✅ **DO**: Work on the Next.js components (`app/`, `components/`)  
+✅ **DO**: Test locally before pushing  
 
 ---
 
@@ -146,13 +148,11 @@ git log --oneline -10
 git revert HEAD
 git push origin main
 
-# Or reset to specific commit
-git reset --hard <commit-hash>
-git push origin main --force
-
 # Redeploy
 ./deploy.sh
 ```
+
+Previous builds are backed up in `out.backup.*` directories.
 
 ---
 
@@ -160,15 +160,14 @@ git push origin main --force
 
 **HTML pages**: `no-cache, must-revalidate` — browsers always revalidate, ensuring fresh content after deploys.
 
-**Static assets** (CSS/JS/images): `public, immutable` with 30-day expiry. Safe because Next.js uses content hashes in filenames (e.g., `2oioldxlp5hov.css`), so new deployments get new URLs.
+**Static assets** (CSS/JS/images): `public, immutable` with 1-year expiry.
 
-**Nginx config**: `/etc/nginx/sites-available/hatch.surf.conf`
+**Nginx config**: Built into the Dockerfile.
 
 If users report seeing old content after deployment:
 1. Verify the container is running: `docker ps | grep hatch-web`
-2. Check the HTML has new classes: `curl -s http://localhost:8080 | grep bg-gradient-to-r`
+2. Check the HTML has new content: `curl -s http://localhost:8080 | head -5`
 3. Ask user to hard refresh: Ctrl+Shift+R (Chrome/Firefox) or Cmd+Shift+R (Mac)
-4. If still cached, check nginx config has `Cache-Control: no-cache, must-revalidate`
 
 ---
 
